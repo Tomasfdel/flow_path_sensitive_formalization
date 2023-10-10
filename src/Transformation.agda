@@ -1,13 +1,11 @@
 module Transformation {n} where
 
--- TODO: Cuando termine de implementar todo, ver si sigo necesitando todos estos imports.
-open import Data.Bool.Base
-open import Data.Nat 
 open import Agda.Builtin.Nat
+open import Data.Bool.Base
 open import Data.Fin 
-open import Data.Vec
-open import Data.Vec.Base
+open import Data.Nat 
 open import Data.Product 
+open import Data.Vec.Base
 
 -- | AST for expressions and statements
 
@@ -50,20 +48,20 @@ mergeActiveSets [] [] = []
 mergeActiveSets (h1 ∷ t1) (h2 ∷ t2) =
    (if h1 == h2 then h1 else (suc (h1 ⊔ h2))) ∷ (mergeActiveSets t1 t2)
 
--- TODO: Esta definición es una asquerosidad, ver cómo puedo hacerla mejor.
--- TODO: Ceci recomienda que vea qué onda with. Volver a revisar cómo funciona.
+-- TODO: Esta definición es bastante fea teniendo que incluir el arreglo de índices.
+-- Hay alguna forma de acceder al índice de un vector para poder tenerlo disponible
+-- en cada llamada recursiva?
 assignActiveSetAux : {m : ℕ} → Vec (Fin n) m → Vec ℕ m → Vec ℕ m → ASTStm
 assignActiveSetAux _ [] [] = SKIP
-assignActiveSetAux (i1 ∷ iR) (h1 ∷ t1) (h2 ∷ t2) = 
-   let assignment = ASSIGN (i1 , h1) (VAR (i1 , h2)) 
-       assignRest = assignActiveSetAux iR t1 t2
+assignActiveSetAux (hInd ∷ tInd) (h1 ∷ t1) (h2 ∷ t2) = 
+   let assignment = ASSIGN (hInd , h1) (VAR (hInd , h2)) 
+       assignRest = assignActiveSetAux tInd t1 t2
    in if h1 == h2 then assignRest else (SEQ assignment assignRest)
 
 assignActiveSet : 𝒜 → 𝒜 → ASTStm
 assignActiveSet = assignActiveSetAux (allFin n)
 
 -- Auxiliary functions for sequences using assignActiveSet.
--- TODO: Preguntarle a Ceci si esto es necesario.
 seqWithoutLeftSkip : ASTStm → ASTStm → ASTStm
 seqWithoutLeftSkip SKIP s = s
 seqWithoutLeftSkip s1 s2  = SEQ s1 s2
@@ -79,7 +77,6 @@ transExp (Var v) active = VAR (v , lookup active v)
 transExp (Add e1 e2) active = ADD (transExp e1 active) (transExp e2 active)
 
 -- Transformation
--- TODO: Releer esta implementación para asegurarme que sigue la especificación del paper.
 trans : ASTStmS → 𝒜 → ASTStm × 𝒜
 trans Skip active = (SKIP , active)
 trans (v := e) active = (ASSIGN (v , lookup active v) (transExp e active) , active)
@@ -96,8 +93,8 @@ trans (If0 cond sT sF) active =
        (tSF , active2) = trans sF active
        active3 = mergeActiveSets active1 active2
        trueBranch = seqWithoutRightSkip tST (assignActiveSet active3 active1)
-       flaseBranch = seqWithoutRightSkip tSF (assignActiveSet active3 active2)
-   in (IF0 tCond trueBranch flaseBranch , active3)
+       falseBranch = seqWithoutRightSkip tSF (assignActiveSet active3 active2)
+   in (IF0 tCond trueBranch falseBranch , active3)
 trans (While cond s) active =
    let (_ , active1) = trans s active
        active2 = mergeActiveSets active active1
@@ -106,8 +103,6 @@ trans (While cond s) active =
    in (seqWithoutLeftSkip (assignActiveSet active2 active) 
                           (WHILE tCond 
                                  (seqWithoutRightSkip tS (assignActiveSet active2 active3))) , active2)
-
--- TODO: Ver qué onda el argumento del módulo que definió Ceci acá.
 
 -- Correctness of the transformation
 -- TODO: Ver si vamos a implementar esta parte o si hay alguna otra propiedad que tenga sentido formalizar. 
