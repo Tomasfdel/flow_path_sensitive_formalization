@@ -35,3 +35,11 @@ data ASTStm : Set where
    SEQ    : ASTStm → ASTStm → ASTStm 
    SKIP   : ASTStm 
 
+-- TODO: Debería definir esto acá o en AssignmentId.agda?
+-- Statements without brackets and assignment identifiers.
+data ASTStmId : Set where
+   ASSIGN : Fin n × ℕ → ℕ → ASTExp  → ASTStmId     
+   IF0    : ASTExp → ASTStmId → ASTStmId  → ASTStmId 
+   WHILE  : ASTExp → ASTStmId → ASTStmId 
+   SEQ    : ASTStmId → ASTStmId → ASTStmId 
+   SKIP   : ASTStmId 
