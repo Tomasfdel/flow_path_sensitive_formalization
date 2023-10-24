@@ -7,36 +7,7 @@ open import Data.Nat
 open import Data.Product 
 open import Data.Vec.Base
 
--- | AST for expressions and statements
-
--- Expressions for language without brackets
-data ASTExpS : Set where
-   IntVal : ℕ → ASTExpS 
-   Var    : Fin n → ASTExpS
-   Add    : ASTExpS  → ASTExpS  → ASTExpS
-   
--- Statements with brackets
-data ASTStmS : Set where
-   ⟦_:=_⟧ : Fin n → ASTExpS  → ASTStmS
-   _:=_   : Fin n → ASTExpS  → ASTStmS
-   If0    : ASTExpS → ASTStmS → ASTStmS  → ASTStmS 
-   While  : ASTExpS → ASTStmS → ASTStmS 
-   Seq    : ASTStmS → ASTStmS → ASTStmS 
-   Skip   : ASTStmS 
-
--- Expressions for language without brackets
-data ASTExp : Set where
-   INTVAL : ℕ → ASTExp 
-   VAR    : Fin n × ℕ → ASTExp
-   ADD    : ASTExp  → ASTExp  → ASTExp 
-
--- Statements without brackets
-data ASTStm : Set where
-   ASSIGN : Fin n × ℕ → ASTExp  → ASTStm     
-   IF0    : ASTExp → ASTStm → ASTStm  → ASTStm 
-   WHILE  : ASTExp → ASTStm → ASTStm 
-   SEQ    : ASTStm → ASTStm → ASTStm 
-   SKIP   : ASTStm 
+open import AST {n}
 
 -- Active Sets
 -- Using a vector to represent a Fin n → ℕ 
@@ -106,4 +77,4 @@ trans (While cond s) active =
 
 -- Correctness of the transformation
 -- TODO: Ver si vamos a implementar esta parte o si hay alguna otra propiedad que tenga sentido formalizar. 
--- Lo dejaría para el final ya que hay dar la semántica
+-- Lo dejaría para el final ya que hay dar la semántica 
