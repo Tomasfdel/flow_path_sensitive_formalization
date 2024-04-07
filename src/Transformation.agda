@@ -9,8 +9,8 @@ open import Data.Vec.Base
 
 open import AST {n}
 
--- Active Sets
--- Using a vector to represent a Fin n → ℕ 
+-- Active Sets.
+-- Using a vector to represent a Fin n → ℕ .
 𝒜 : Set _
 𝒜 = Vec ℕ n
 
@@ -41,13 +41,13 @@ seqWithoutRightSkip : ASTStm → ASTStm → ASTStm
 seqWithoutRightSkip s SKIP = s
 seqWithoutRightSkip s1 s2  = SEQ s1 s2
 
--- Expressions transformation
+-- Expressions transformation.
 transExp : ASTExpS → 𝒜 → ASTExp
 transExp (IntVal n) _ = INTVAL n
 transExp (Var v) active = VAR (v , lookup active v)
 transExp (Add e1 e2) active = ADD (transExp e1 active) (transExp e2 active)
 
--- Transformation
+-- Transformation.
 trans : ASTStmS → 𝒜 → ASTStm × 𝒜
 trans Skip active = (SKIP , active)
 trans (v := e) active = (ASSIGN (v , lookup active v) (transExp e active) , active)
