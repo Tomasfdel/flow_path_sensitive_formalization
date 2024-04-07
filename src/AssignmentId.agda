@@ -21,9 +21,10 @@ identifyAssignmentsAux (SEQ s1 s2) id =
    in SEQ s1Id s2Id , id2     
 identifyAssignmentsAux SKIP id = SKIP , id
 
--- Gives a unique (integer) identifier to each assignment in the given program.
-identifyAssignments : ASTStm → ASTStmId
-identifyAssignments ast = proj₁ (identifyAssignmentsAux ast zero) 
+-- Returns the given program with each assignment having a unique (integer) identifier
+-- and the total number of assignments in it.
+identifyAssignments : ASTStm → ASTStmId × ℕ
+identifyAssignments ast = identifyAssignmentsAux ast zero 
 
 -- TODO: Revisar si esta implementación es demasiado fea o me termina complicando a la larga.
 -- Meter una segunda transformación no me gusta para nada, pero es lo que se me ocurrió.
