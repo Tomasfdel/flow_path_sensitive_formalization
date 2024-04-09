@@ -7,7 +7,6 @@ data SecurityLevel : Set where
     Low : SecurityLevel
     High : SecurityLevel
 
--- TODO: What are proper names for the operators?
 data SecurityLabel : Set where
     Label : SecurityLevel → SecurityLabel
     ExpTest : ASTExp → SecurityLabel → SecurityLabel → SecurityLabel

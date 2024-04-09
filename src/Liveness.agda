@@ -2,13 +2,13 @@ module Liveness {n} where
 
 open import Data.Fin 
 open import Data.List.Base
-open import Data.Nat 
+open import Data.Nat
+open import Data.Product 
 open import Data.Vec.Base
-open import Data.Product
 
 open import AST {n}
-open import Transformation {n}
 open import NonRepeatingCollection
+open import Transformation {n}
 
 VariableSet : Set _
 VariableSet = NonRepeatingCollection (Fin n × ℕ)
