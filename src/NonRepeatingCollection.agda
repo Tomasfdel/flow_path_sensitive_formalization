@@ -1,5 +1,6 @@
 module NonRepeatingCollection where
 
+open import Data.Bool.Base
 open import Data.List.Base
 
 -- TODO: Dummy implementation until I finish liveness analysis. 
@@ -8,13 +9,14 @@ open import Data.List.Base
 NonRepeatingCollection : (A : Set) → Set _
 NonRepeatingCollection A = List A
 
--- hasElem : {A : Set} → A → NonRepeatingCollection A → Bool
--- hasElem _ [] = false
--- hasElem elem (elem ∷ xs) = true
--- hasElem elem (_ ∷ xs) = hasElem elem xs
+hasElemNRC : {A : Set} → A → NonRepeatingCollection A → Bool
+-- hasElemNRC _ [] = false
+-- hasElemNRC elem (elem ∷ xs) = true
+-- hasElemNRC elem (_ ∷ xs) = hasElemNRC elem xs
+hasElemNRC _ _ = true
 
 listToNRC : {A : Set} → List A → NonRepeatingCollection A
--- listToNRC = foldr (\elem nrc → if hasElem elem nrc then nrc else elem ∷ nrc) []
+-- listToNRC = foldr (\elem nrc → if hasElemNRC elem nrc then nrc else elem ∷ nrc) []
 listToNRC x = x
 
 NRCtoList : {A : Set} → NonRepeatingCollection A → List A
