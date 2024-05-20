@@ -16,7 +16,7 @@ VariableSet = NonRepeatingCollection (Fin n × ℕ)
 activeSetToNRC : 𝒜 → VariableSet
 activeSetToNRC activeSet = listToNRC (toList (Data.Vec.Base.zip (Data.Vec.Base.allFin (Data.Vec.Base.length activeSet)) activeSet))
 
-statementKill : ASTStmId → VariableSet
+statementKill : {t : ℕ} → ASTStmId {t} → VariableSet
 statementKill (ASSIGN variableName _ _) = listToNRC (variableName ∷ [])
 statementKill _ = listToNRC []
 
@@ -33,12 +33,10 @@ expressionGen (ADD expression1 expression2) = unionNRC (expressionGen expression
 -- should hold the liveOut of each of the m assignments in the original program. As a side effect of the
 -- liveIn calculation of an assignment, the function updates the corresponding index in the vector. That
 -- result will then be used in one of the rules of the typing system. 
-livenessAnalysisAux : {m : ℕ} → ASTStmId → VariableSet → Vec VariableSet m → VariableSet × (Vec VariableSet m)
--- TODO: newAssignLiveOuts should equal (assignLiveOuts [ assignId ]≔ nextLiveIn) but for that I 
--- need to see how to make it so that assignId is of type (Fin m) instead of ℕ.
+livenessAnalysisAux : {t : ℕ} → ASTStmId {t} → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
 livenessAnalysisAux statement@(ASSIGN variableName assignId expression) nextLiveIn assignLiveOuts = 
     let liveIn = unionNRC (differenceNRC nextLiveIn (statementKill statement)) (expressionGen expression)
-        newAssignLiveOuts = assignLiveOuts
+        newAssignLiveOuts = assignLiveOuts [ assignId ]≔ nextLiveIn
      in liveIn , newAssignLiveOuts
 -- TODO: Check if, in this case, I only need to add (expressionGen condition) to the resulting liveIn
 --  or if I also need to add the free variables from the types of the variables used in the expression.    
@@ -54,6 +52,6 @@ livenessAnalysisAux (SEQ statement1 statement2) nextLiveIn assignLiveOuts =
      in livenessAnalysisAux statement1 nextLiveIn2 assignLiveOuts2
 livenessAnalysisAux SKIP nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
 
-livenessAnalysis : {m : ℕ} → ASTStmId → 𝒜 → Vec VariableSet m
+livenessAnalysis : {t : ℕ} → ASTStmId {t} → 𝒜 → Vec VariableSet t
 livenessAnalysis statement activeSet = 
     proj₂ (livenessAnalysisAux statement (activeSetToNRC activeSet) (Data.Vec.Base.replicate (listToNRC [])))

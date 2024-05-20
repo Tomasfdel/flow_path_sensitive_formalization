@@ -38,12 +38,10 @@ removePredicatesWithVariable predicate@(ExpNonZero expression) variableName =
 removePredicatesWithVariable (And predicate1 predicate2) variableName = 
     simplifyAnd (removePredicatesWithVariable predicate1 variableName) (removePredicatesWithVariable predicate2 variableName)
 
-populatePredicateVector : {m : ℕ} → ASTStmId → Predicate → Vec Predicate m → Predicate × (Vec Predicate m)
--- TODO: newPredicateVector should equal (predicateVector [ assignId ]≔ predicate) but for that I 
--- need to see how to make it so that assignId is of type (Fin m) instead of ℕ.
+populatePredicateVector : {t : ℕ} → ASTStmId {t} → Predicate → Vec Predicate t → Predicate × (Vec Predicate t)
 populatePredicateVector (ASSIGN variableName assignId _) predicate predicateVector = 
     let newPredicate = removePredicatesWithVariable predicate variableName
-        newPredicateVector = predicateVector
+        newPredicateVector = predicateVector [ assignId ]≔ predicate
      in newPredicate , newPredicateVector
 -- TODO: This is not entirely correct in the case that the original predicate can become
 -- false in both the conditional branches, so I have to check that every condition in the predicate
@@ -67,6 +65,6 @@ populatePredicateVector (SEQ statement1 statement2) predicate predicateVector =
 populatePredicateVector SKIP predicate predicateVector =
     predicate , predicateVector
 
-generatePredicates : {m : ℕ} → ASTStmId → Vec Predicate m
+generatePredicates : {t : ℕ} → ASTStmId {t} → Vec Predicate t
 generatePredicates statement =
     proj₂ (populatePredicateVector statement True (Data.Vec.Base.replicate True))
