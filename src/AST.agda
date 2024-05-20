@@ -1,7 +1,7 @@
 module AST {n} where
 
-open import Data.Fin 
-open import Data.Nat 
+open import Data.Fin
+open import Data.Nat
 open import Data.Product
 
 -- | AST for expressions and statements.
@@ -36,9 +36,10 @@ data ASTStm : Set where
    SKIP   : ASTStm 
 
 -- Statements without brackets and with assignment identifiers.
-data ASTStmId : Set where
-   ASSIGN : Fin n × ℕ → ℕ → ASTExp → ASTStmId
-   IF0    : ASTExp → ASTStmId → ASTStmId → ASTStmId 
-   WHILE  : ASTExp → ASTStmId → ASTStmId 
-   SEQ    : ASTStmId → ASTStmId → ASTStmId 
-   SKIP   : ASTStmId 
+-- A program is parameterized by the total number of assignment statements it has.
+data ASTStmId {t : ℕ} : Set where
+   ASSIGN : Fin n × ℕ → Fin t → ASTExp → ASTStmId {t}
+   IF0    : ASTExp → ASTStmId {t} → ASTStmId {t} → ASTStmId {t}
+   WHILE  : ASTExp → ASTStmId {t} → ASTStmId {t}
+   SEQ    : ASTStmId {t} → ASTStmId {t} → ASTStmId {t}
+   SKIP   : ASTStmId {t}
