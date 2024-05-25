@@ -21,8 +21,8 @@ simplifyAnd True pred = pred
 simplifyAnd pred True = pred
 simplifyAnd pred1 pred2 = And pred1 pred2
 
--- TODO: Move somewhere else.
--- TODO: Replace NonRepeatingCollection (Fin n × ℕ) by the VariableSet type.
+-- TODO(minor): Move somewhere else.
+-- TODO(minor): Replace NonRepeatingCollection (Fin n × ℕ) by the VariableSet type.
 expressionVariables : ASTExp → NonRepeatingCollection (Fin n × ℕ)
 expressionVariables (INTVAL _) = listToNRC []
 expressionVariables (VAR variableName) = listToNRC (variableName ∷ [])
@@ -38,33 +38,51 @@ removePredicatesWithVariable predicate@(ExpNonZero expression) variableName =
 removePredicatesWithVariable (And predicate1 predicate2) variableName = 
     simplifyAnd (removePredicatesWithVariable predicate1 variableName) (removePredicatesWithVariable predicate2 variableName)
 
+_==ₚ_ : Predicate → Predicate → Bool
+True ==ₚ True = true
+(ExpZero exp1) ==ₚ (ExpZero exp2) = exp1 ==ₑ exp2
+(ExpNonZero exp1) ==ₚ (ExpNonZero exp2) = exp1 ==ₑ exp2
+(And pred1 pred2) ==ₚ (And pred3 pred4) = (pred1 ==ₚ pred3) ∧ (pred2 ==ₚ pred4)
+_ ==ₚ _ = false
+
+containsPredicate : Predicate → Predicate → Bool
+containsPredicate pred (And pred1 pred2) = 
+    (containsPredicate pred pred1) ∨ (containsPredicate pred pred2)
+containsPredicate pred1 pred2 = pred1 ==ₚ pred2
+
+intersectPredicates : Predicate → Predicate → Predicate
+intersectPredicates (And pred1 pred2) pred = 
+    simplifyAnd (intersectPredicates pred1 pred) (intersectPredicates pred2 pred)
+intersectPredicates pred1 pred2 = 
+    if containsPredicate pred1 pred2 then pred1 else True
+
+-- Iterates through the given program statement and determines a predicate that should always be true after its execution.
+-- For that, it takes a predicate previous to the execution of the statement and uses that to determine predicates of the
+-- intermediate steps of the execution doing a shallow branch analysis on IF and WHILE statements.
+-- Additionally, when the function finds an assignment statement, it stores the predicate that was true before its execution
+-- in the n-th index of a vector, where n is the index number of the assignment. 
 populatePredicateVector : {t : ℕ} → ASTStmId {t} → Predicate → Vec Predicate t → Predicate × (Vec Predicate t)
 populatePredicateVector (ASSIGN variableName assignId _) predicate predicateVector = 
     let newPredicate = removePredicatesWithVariable predicate variableName
         newPredicateVector = predicateVector [ assignId ]≔ predicate
      in newPredicate , newPredicateVector
--- TODO: This is not entirely correct in the case that the original predicate can become
--- false in both the conditional branches, so I have to check that every condition in the predicate
--- is still present in both the resulting predicates from the conditional branches.
 populatePredicateVector (IF0 condition statementT statementF) predicate predicateVector = 
-    let _ , predicateVectorT = populatePredicateVector statementT (simplifyAnd predicate (ExpNonZero condition)) predicateVector
-        _ , predicateVectorF = populatePredicateVector statementF (simplifyAnd predicate (ExpZero condition)) predicateVectorT
-     in predicate , predicateVectorF
--- TODO: Here I also may need to remove some clauses from the predicate after the while since, similarly
--- to the IF0 case, some parts of the condition may become invalidated. However, I should always remove
--- that part from the predicate after the while since I cannot know statically whether the body will
--- execute or not, so to be safe those conditions need to be removed always. If a variable is not affected
--- by the while body and is part of a condition, that should be safe to keep as long as no affected variable is involved
--- in the condition.
+    let predicateT , predicateVectorT = populatePredicateVector statementT (simplifyAnd predicate (ExpNonZero condition)) predicateVector
+        predicateF , predicateVectorF = populatePredicateVector statementF (simplifyAnd predicate (ExpZero condition)) predicateVectorT
+     in intersectPredicates predicateT predicateF , predicateVectorF
 populatePredicateVector (WHILE condition statement) predicate predicateVector = 
-    let _ , predicateVector2 = populatePredicateVector statement (simplifyAnd predicate (ExpNonZero condition)) predicateVector
-     in (simplifyAnd predicate (ExpZero condition)) , predicateVector2
+    let predicate2 , predicateVector2 = populatePredicateVector statement (simplifyAnd predicate (ExpNonZero condition)) predicateVector
+        finalPredicate = intersectPredicates predicate predicate2
+     in (simplifyAnd finalPredicate (ExpZero condition)) , predicateVector2
 populatePredicateVector (SEQ statement1 statement2) predicate predicateVector = 
     let predicate2 , predicateVector2 = populatePredicateVector statement1 predicate predicateVector
      in populatePredicateVector statement2 predicate2 predicateVector2
 populatePredicateVector SKIP predicate predicateVector =
     predicate , predicateVector
 
+-- Given a program statement, returns a vector of predicates so that the element in its n-th
+-- position is a predicate that is always true before the execution of the n-th assignment 
+-- of the program. 
 generatePredicates : {t : ℕ} → ASTStmId {t} → Vec Predicate t
 generatePredicates statement =
     proj₂ (populatePredicateVector statement True (Data.Vec.Base.replicate True))
