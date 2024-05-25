@@ -2,8 +2,10 @@ module Liveness {n} where
 
 open import Data.Fin 
 open import Data.List.Base
+  hiding (allFin ; length ; replicate ; zip ) 
 open import Data.Nat
-open import Data.Product 
+open import Data.Product
+  hiding (zip) 
 open import Data.Vec.Base
 
 open import AST {n}
@@ -14,13 +16,13 @@ VariableSet : Set _
 VariableSet = NonRepeatingCollection (Fin n × ℕ)
 
 activeSetToNRC : 𝒜 → VariableSet
-activeSetToNRC activeSet = listToNRC (toList (Data.Vec.Base.zip (Data.Vec.Base.allFin (Data.Vec.Base.length activeSet)) activeSet))
+activeSetToNRC activeSet = listToNRC (toList (zip (allFin (length activeSet)) activeSet))
 
 statementKill : {t : ℕ} → ASTStmId {t} → VariableSet
 statementKill (ASSIGN variableName _ _) = listToNRC (variableName ∷ [])
 statementKill _ = listToNRC []
 
--- TODO: This implementation is incomplete. I still need to add the set of free variables from the variable's security type
+-- TODO(major): This implementation is incomplete. I still need to add the set of free variables from the variable's security type
 -- following the description from Figure 9 of the paper.
 expressionGen : ASTExp → VariableSet
 expressionGen (INTVAL _) = listToNRC []
@@ -38,13 +40,13 @@ livenessAnalysisAux statement@(ASSIGN variableName assignId expression) nextLive
     let liveIn = unionNRC (differenceNRC nextLiveIn (statementKill statement)) (expressionGen expression)
         newAssignLiveOuts = assignLiveOuts [ assignId ]≔ nextLiveIn
      in liveIn , newAssignLiveOuts
--- TODO: Check if, in this case, I only need to add (expressionGen condition) to the resulting liveIn
+-- TODO(medium): Check if, in this case, I only need to add (expressionGen condition) to the resulting liveIn
 --  or if I also need to add the free variables from the types of the variables used in the expression.    
 livenessAnalysisAux (IF0 condition statementT statementF) nextLiveIn assignLiveOuts = 
     let liveInT , assignLiveOutsT = livenessAnalysisAux statementT nextLiveIn assignLiveOuts
         liveInF , assignLiveOutsF = livenessAnalysisAux statementF nextLiveIn assignLiveOutsT
      in unionNRC (unionNRC liveInT liveInF) (expressionGen condition) , assignLiveOutsF
--- TODO: Here I have a problem that the liveIn for the condition and the statement are mutually dependant. 
+-- TODO(major): Here I have a problem that the liveIn for the condition and the statement are mutually dependant. 
 -- How can I go about implementing this? Do we need some kind of fixed point iteration?
 livenessAnalysisAux (WHILE condition statement) nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
 livenessAnalysisAux (SEQ statement1 statement2) nextLiveIn assignLiveOuts = 
@@ -52,6 +54,7 @@ livenessAnalysisAux (SEQ statement1 statement2) nextLiveIn assignLiveOuts =
      in livenessAnalysisAux statement1 nextLiveIn2 assignLiveOuts2
 livenessAnalysisAux SKIP nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
 
+-- TODO(medium): Add comment genrally explainin what this does, or see if it's already covered by the comment of livenessAnalysisAux.
 livenessAnalysis : {t : ℕ} → ASTStmId {t} → 𝒜 → Vec VariableSet t
 livenessAnalysis statement activeSet = 
-    proj₂ (livenessAnalysisAux statement (activeSetToNRC activeSet) (Data.Vec.Base.replicate (listToNRC [])))
+    proj₂ (livenessAnalysisAux statement (activeSetToNRC activeSet) (replicate (listToNRC [])))
