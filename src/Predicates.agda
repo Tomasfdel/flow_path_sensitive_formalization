@@ -8,7 +8,7 @@ open import Data.Product
 open import Data.Vec.Base 
 
 open import AST {n}
-open import NonRepeatingCollection
+open import VariableSet {n}
 
 data Predicate : Set where
     True : Predicate
@@ -21,20 +21,18 @@ simplifyAnd True pred = pred
 simplifyAnd pred True = pred
 simplifyAnd pred1 pred2 = And pred1 pred2
 
--- TODO(minor): Move somewhere else.
--- TODO(minor): Replace NonRepeatingCollection (Fin n × ℕ) by the VariableSet type.
-expressionVariables : ASTExp → NonRepeatingCollection (Fin n × ℕ)
-expressionVariables (INTVAL _) = listToNRC []
-expressionVariables (VAR variableName) = listToNRC (variableName ∷ [])
+expressionVariables : ASTExp → VariableSet
+expressionVariables (INTVAL _) = emptyᵥₛ
+expressionVariables (VAR variableName) = fromListᵥₛ (variableName ∷ [])
 expressionVariables (ADD expression1 expression2) = 
-    unionNRC (expressionVariables expression1) (expressionVariables expression2)
+    (expressionVariables expression1) unionᵥₛ (expressionVariables expression2)
 
 removePredicatesWithVariable : Predicate → Fin n × ℕ → Predicate
 removePredicatesWithVariable True _ = True
 removePredicatesWithVariable predicate@(ExpZero expression) variableName = 
-    if hasElemNRC variableName (expressionVariables expression) then True else predicate
+    if elemᵥₛ variableName (expressionVariables expression) then True else predicate
 removePredicatesWithVariable predicate@(ExpNonZero expression) variableName = 
-    if hasElemNRC variableName (expressionVariables expression) then True else predicate
+    if elemᵥₛ variableName (expressionVariables expression) then True else predicate
 removePredicatesWithVariable (And predicate1 predicate2) variableName = 
     simplifyAnd (removePredicatesWithVariable predicate1 variableName) (removePredicatesWithVariable predicate2 variableName)
 

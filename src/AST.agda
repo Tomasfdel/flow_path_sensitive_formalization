@@ -6,6 +6,8 @@ open import Data.Fin
 open import Data.Nat
 open import Data.Product
 
+open import VariableSet {n}
+
 -- | AST for expressions and statements.
 
 -- Expressions for language with brackets.
@@ -32,7 +34,7 @@ data ASTExp : Set where
 -- Equality test for expressions.
 _==ₑ_ : ASTExp → ASTExp → Bool
 (INTVAL v1) ==ₑ (INTVAL v2) = v1 == v2
-(VAR (f1 , n1)) ==ₑ (VAR (f2 , n2)) = (toℕ f1 == toℕ f2) ∧ (n1 == n2)
+(VAR v1) ==ₑ (VAR v2) = v1 ==ᵥ v2
 (ADD exp1 exp2) ==ₑ (ADD exp3 exp4) = (exp1 ==ₑ exp3) ∧ (exp2 ==ₑ exp4)
 _ ==ₑ _ = false
 

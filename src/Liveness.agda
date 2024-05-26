@@ -1,6 +1,5 @@
 module Liveness {n} where
 
-open import Data.Fin 
 open import Data.List.Base
   hiding (allFin ; length ; replicate ; zip ) 
 open import Data.Nat
@@ -9,25 +8,22 @@ open import Data.Product
 open import Data.Vec.Base
 
 open import AST {n}
-open import NonRepeatingCollection
+open import VariableSet {n}
 open import Transformation {n}
 
-VariableSet : Set _
-VariableSet = NonRepeatingCollection (Fin n × ℕ)
-
-activeSetToNRC : 𝒜 → VariableSet
-activeSetToNRC activeSet = listToNRC (toList (zip (allFin (length activeSet)) activeSet))
+fromActiveSetᵥₛ : 𝒜 → VariableSet
+fromActiveSetᵥₛ activeSet = fromListᵥₛ (toList (zip (allFin (length activeSet)) activeSet))
 
 statementKill : {t : ℕ} → ASTStmId {t} → VariableSet
-statementKill (ASSIGN variableName _ _) = listToNRC (variableName ∷ [])
-statementKill _ = listToNRC []
+statementKill (ASSIGN variableName _ _) = fromListᵥₛ (variableName ∷ [])
+statementKill _ = emptyᵥₛ
 
 -- TODO(major): This implementation is incomplete. I still need to add the set of free variables from the variable's security type
 -- following the description from Figure 9 of the paper.
 expressionGen : ASTExp → VariableSet
-expressionGen (INTVAL _) = listToNRC []
-expressionGen (VAR variableName) = listToNRC (variableName ∷ [])
-expressionGen (ADD expression1 expression2) = unionNRC (expressionGen expression1) (expressionGen expression2)
+expressionGen (INTVAL _) = emptyᵥₛ
+expressionGen (VAR variableName) = fromListᵥₛ (variableName ∷ [])
+expressionGen (ADD expression1 expression2) = (expressionGen expression1) unionᵥₛ (expressionGen expression2)
 
 -- This function takes a statement and calculates the liveIn set for it. For that, it takes a VariableSet
 -- which holds the liveIn of its successors, which would correspond to the liveOut of the statement.
@@ -37,7 +33,7 @@ expressionGen (ADD expression1 expression2) = unionNRC (expressionGen expression
 -- result will then be used in one of the rules of the typing system. 
 livenessAnalysisAux : {t : ℕ} → ASTStmId {t} → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
 livenessAnalysisAux statement@(ASSIGN variableName assignId expression) nextLiveIn assignLiveOuts = 
-    let liveIn = unionNRC (differenceNRC nextLiveIn (statementKill statement)) (expressionGen expression)
+    let liveIn = (nextLiveIn diffᵥₛ (statementKill statement)) unionᵥₛ (expressionGen expression)
         newAssignLiveOuts = assignLiveOuts [ assignId ]≔ nextLiveIn
      in liveIn , newAssignLiveOuts
 -- TODO(medium): Check if, in this case, I only need to add (expressionGen condition) to the resulting liveIn
@@ -45,7 +41,7 @@ livenessAnalysisAux statement@(ASSIGN variableName assignId expression) nextLive
 livenessAnalysisAux (IF0 condition statementT statementF) nextLiveIn assignLiveOuts = 
     let liveInT , assignLiveOutsT = livenessAnalysisAux statementT nextLiveIn assignLiveOuts
         liveInF , assignLiveOutsF = livenessAnalysisAux statementF nextLiveIn assignLiveOutsT
-     in unionNRC (unionNRC liveInT liveInF) (expressionGen condition) , assignLiveOutsF
+     in (liveInT unionᵥₛ liveInF) unionᵥₛ (expressionGen condition) , assignLiveOutsF
 -- TODO(major): Here I have a problem that the liveIn for the condition and the statement are mutually dependant. 
 -- How can I go about implementing this? Do we need some kind of fixed point iteration?
 livenessAnalysisAux (WHILE condition statement) nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
@@ -54,7 +50,8 @@ livenessAnalysisAux (SEQ statement1 statement2) nextLiveIn assignLiveOuts =
      in livenessAnalysisAux statement1 nextLiveIn2 assignLiveOuts2
 livenessAnalysisAux SKIP nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
 
--- TODO(medium): Add comment genrally explainin what this does, or see if it's already covered by the comment of livenessAnalysisAux.
+-- Given a program statement, returns a vector of variable sets so that the element in its n-th
+-- position is the liveOut set of the n-th assignment of the program. 
 livenessAnalysis : {t : ℕ} → ASTStmId {t} → 𝒜 → Vec VariableSet t
 livenessAnalysis statement activeSet = 
-    proj₂ (livenessAnalysisAux statement (activeSetToNRC activeSet) (replicate (listToNRC [])))
+    proj₂ (livenessAnalysisAux statement (fromActiveSetᵥₛ activeSet) (replicate emptyᵥₛ))
