@@ -21,18 +21,12 @@ simplifyAnd True pred = pred
 simplifyAnd pred True = pred
 simplifyAnd pred1 pred2 = And pred1 pred2
 
-expressionVariables : ASTExp → VariableSet
-expressionVariables (INTVAL _) = emptyᵥₛ
-expressionVariables (VAR variableName) = fromListᵥₛ (variableName ∷ [])
-expressionVariables (ADD expression1 expression2) = 
-    (expressionVariables expression1) unionᵥₛ (expressionVariables expression2)
-
 removePredicatesWithVariable : Predicate → Fin n × ℕ → Predicate
 removePredicatesWithVariable True _ = True
 removePredicatesWithVariable predicate@(ExpZero expression) variableName = 
-    if elemᵥₛ variableName (expressionVariables expression) then True else predicate
+    if variableName elemᵥₛ (expressionVariables expression) then True else predicate
 removePredicatesWithVariable predicate@(ExpNonZero expression) variableName = 
-    if elemᵥₛ variableName (expressionVariables expression) then True else predicate
+    if variableName elemᵥₛ (expressionVariables expression) then True else predicate
 removePredicatesWithVariable (And predicate1 predicate2) variableName = 
     simplifyAnd (removePredicatesWithVariable predicate1 variableName) (removePredicatesWithVariable predicate2 variableName)
 

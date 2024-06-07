@@ -16,14 +16,14 @@ fromActiveSetᵥₛ : 𝒜 → VariableSet
 fromActiveSetᵥₛ activeSet = fromListᵥₛ (toList (zip (allFin (length activeSet)) activeSet))
 
 statementKill : {t : ℕ} → ASTStmId {t} → VariableSet
-statementKill (ASSIGN variableName _ _) = fromListᵥₛ (variableName ∷ [])
+statementKill (ASSIGN variableName _ _) = singletonᵥₛ variableName
 statementKill _ = emptyᵥₛ
 
 -- TODO(major): This implementation is incomplete. I still need to add the set of free variables from the variable's security type
 -- following the description from Figure 9 of the paper.
 expressionGen : ASTExp → VariableSet
 expressionGen (INTVAL _) = emptyᵥₛ
-expressionGen (VAR variableName) = fromListᵥₛ (variableName ∷ [])
+expressionGen (VAR variableName) = singletonᵥₛ variableName
 expressionGen (ADD expression1 expression2) = (expressionGen expression1) unionᵥₛ (expressionGen expression2)
 
 -- Uses an iterative method to calculate the liveIn set of a WHILE statement.

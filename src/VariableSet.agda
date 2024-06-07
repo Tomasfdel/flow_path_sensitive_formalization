@@ -33,9 +33,12 @@ toListᵥₛ = id
 emptyᵥₛ : VariableSet
 emptyᵥₛ = fromListᵥₛ []
 
--- Set size.
+-- Basic set constructors.
 sizeᵥₛ : VariableSet → ℕ
 sizeᵥₛ = length 
+
+singletonᵥₛ : Fin n × ℕ → VariableSet
+singletonᵥₛ x = fromListᵥₛ (x ∷ [])
 
 -- Element removal.
 popᵥₛ : Fin n × ℕ → VariableSet → VariableSet

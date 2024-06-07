@@ -38,6 +38,13 @@ _==ₑ_ : ASTExp → ASTExp → Bool
 (ADD exp1 exp2) ==ₑ (ADD exp3 exp4) = (exp1 ==ₑ exp3) ∧ (exp2 ==ₑ exp4)
 _ ==ₑ _ = false
 
+-- Set of free variables of an expression.
+expressionVariables : ASTExp → VariableSet
+expressionVariables (INTVAL _) = emptyᵥₛ
+expressionVariables (VAR variableName) = singletonᵥₛ variableName
+expressionVariables (ADD expression1 expression2) = 
+    (expressionVariables expression1) unionᵥₛ (expressionVariables expression2)
+
 -- Statements without brackets.
 data ASTStm : Set where
    ASSIGN : Fin n × ℕ → ASTExp → ASTStm
