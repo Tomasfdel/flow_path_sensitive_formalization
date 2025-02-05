@@ -15,6 +15,7 @@ The Agda modules are organized according to the following structure:
     * Liveness
     * Predicates
     * SecurityLabels
+    * Semantic
     * Transformation
     * VariableSet
 
@@ -25,6 +26,8 @@ The Agda modules are organized according to the following structure:
 * **AST.agda**: Definition of the syntax trees for both the bracketed and non-bracketed versions of the source language. _(Section 3)_
 
 * **Transformation.agda**: Transformation between bracketed and non-bracketed programs. _(Section 4.2)_
+
+* **Semantic.agda**: Proof of correctness of the transformation. _(Section 4.3)_
 
 * **SecurityLabels.agda**: Definition of the type system's security labels. _(Section 5.3)_
 
