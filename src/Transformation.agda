@@ -72,7 +72,3 @@ trans (While cond s) active =
    in (simplifiedSeq (active2 :=𝒜 active) 
                           (WHILE tCond 
                                  (simplifiedSeq tS (active2 :=𝒜 active3))) , active2)
-
--- Correctness of the transformation0
--- TODO(minor): Check if we'll implement this or if there's any other property that makes sense to formalize.
--- I'll leave this for the final part since we need to define language semantics to do this.
