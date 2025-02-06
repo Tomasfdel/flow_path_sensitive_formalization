@@ -1,7 +1,5 @@
 module Semantic {n} where
 
---open import Agda.Builtin.Nat
-open import Data.Bool.Base
 open import Data.Fin
   hiding (_+_)
 open import Data.List
@@ -10,7 +8,6 @@ open import Data.Nat
 open import Data.Product 
 open import Data.Vec.Base
 open import Relation.Binary.PropositionalEquality 
-  hiding ([_])
 
 open import AST {n}
 open import Transformation {n}
