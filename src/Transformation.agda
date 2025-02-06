@@ -46,28 +46,28 @@ transExp (Add e1 e2) active = ADD (transExp e1 active) (transExp e2 active)
 
 -- Program transformation from bracketed to non-bracketed statements,
 -- following rules from figure 4 of the paper.
-trans : ASTStmS → 𝒜 → ASTStm × 𝒜
-trans Skip active = (SKIP , active)
-trans (v := e) active = (ASSIGN (v , lookup active v) (transExp e active) , active)
-trans ⟦ v := e ⟧ active = 
+transStm : ASTStmS → 𝒜 → ASTStm × 𝒜
+transStm Skip active = (SKIP , active)
+transStm (v := e) active = (ASSIGN (v , lookup active v) (transExp e active) , active)
+transStm ⟦ v := e ⟧ active = 
    let newIndex = suc (lookup active v) 
    in (ASSIGN (v , newIndex) (transExp e active) , (active [ v ]≔ newIndex) )
-trans (Seq s1 s2) active = 
-   let (tS1 , active1) = trans s1 active
-       (tS2 , active2) = trans s2 active1
+transStm (Seq s1 s2) active = 
+   let (tS1 , active1) = transStm s1 active
+       (tS2 , active2) = transStm s2 active1
    in (SEQ tS1 tS2 , active2)
-trans (If0 cond sT sF) active =
+transStm (If0 cond sT sF) active =
    let tCond = transExp cond active
-       (tST , active1) = trans sT active
-       (tSF , active2) = trans sF active
+       (tST , active1) = transStm sT active
+       (tSF , active2) = transStm sF active
        active3 = merge𝒜 active1 active2
        trueBranch = simplifiedSeq tST (active3 :=𝒜 active1)
        falseBranch = simplifiedSeq tSF (active3 :=𝒜 active2)
    in (IF0 tCond trueBranch falseBranch , active3)
-trans (While cond s) active =
-   let (_ , active1) = trans s active
+transStm (While cond s) active =
+   let (_ , active1) = transStm s active
        active2 = merge𝒜 active active1
-       (tS , active3) = trans s active2
+       (tS , active3) = transStm s active2
        tCond = transExp cond active2
    in (simplifiedSeq (active2 :=𝒜 active) 
                           (WHILE tCond 

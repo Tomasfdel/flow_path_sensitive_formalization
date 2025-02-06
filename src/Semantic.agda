@@ -116,3 +116,24 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
   WhileFₜ : {m : Memoryₜ} {e : ASTExp} {s : ASTStm}
     → ⟦ e ⟧ₜ m ≡ 0 
     → ⟨ WHILE e s , m ⟩⇓ₜ m
+
+
+-- CORRECTNESS PROOF
+-- TODO(major): Placeholder to be able to define the correctness proof. Define this.
+data _==ₘ_ : Memory → Memory → Set where
+  Default : {m m' : Memory} → m ==ₘ m'
+
+-- TODO(major): Implement.
+memProj : Memoryₜ → 𝒜 → Memory
+memProj =  {! !}
+
+-- Correctness of the program transformation.
+-- TODO(question): Is there any way to put a name to the values used in the hypothesis types
+-- so that I can put it a name (as in a let expression) instead of having to mention (transStm s active) multiple times?
+-- TODO(major): Implement.
+correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : 𝒜}
+  → ⟨ s , m ⟩⇓ m'
+  → ⟨ proj₁ (transStm s active) , mₜ ⟩⇓ₜ mₜ'
+  → m ==ₘ (memProj mₜ active)
+  → m' ==ₘ (memProj mₜ' (proj₂ (transStm s active)))
+correctness = {! !}
