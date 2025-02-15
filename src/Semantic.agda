@@ -119,21 +119,35 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
 
 
 -- CORRECTNESS PROOF
--- Memory equality definition.
-_==ₘ_ : (m m' : Memory) → Set
-m ==ₘ m' = ∀ x → lookup m x ≡ lookup m' x
 
--- TODO(major): Implement.
-memProj : Memoryₜ → 𝒜 → Memory
-memProj =  {! !}
+lookupₜ : Memoryₜ  → 𝒜 → Fin n → ℕ
+lookupₜ mₜ active x = lookupOrDefault (lookup active x) (lookup mₜ x)
+
+-- Equality between a memory and the projection of a transformed memory on an active set.
+_==ₘ_-_ : Memory → Memoryₜ → 𝒜 → Set
+m ==ₘ mₜ - active = ∀ x → lookup m x ≡ lookupₜ mₜ active x
+
+-- Semantic equality of expression and its transformed counterpart.
+-- TODO(major): This only returns the first half of the thesis from the Lemma 3. I'll need to define the second half at some point.
+expEquality : {e : ASTExpS} {m : Memory} {mₜ : Memoryₜ} {v v' : ℕ} {active : 𝒜}
+  → m ==ₘ mₜ - active
+  → ⟦ e ⟧ m ≡ v 
+  → ⟦ transExp e active ⟧ₜ mₜ ≡ v' 
+  → v ≡ v' 
+expEquality {IntVal n} {m} {mₜ} {.(⟦ IntVal n ⟧ m)} {.(⟦ transExp (IntVal n) a ⟧ₜ mₜ)} {a} _ refl refl = refl
+expEquality {Var x} {m} {mₜ} {.(⟦ Var x ⟧ m)} {.(⟦ transExp (Var x) a ⟧ₜ mₜ)} {a} m=mt refl refl = m=mt x
+expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ m)} {.(⟦ transExp (Add e1 e2) a ⟧ₜ mₜ)} {a} m=mt refl refl = 
+  let expEq1 = expEquality {e1} {m} {mₜ} {⟦ e1 ⟧ m} {⟦ transExp e1 a ⟧ₜ mₜ} {a} m=mt refl refl
+      expEq2 = expEquality {e2} {m} {mₜ} {⟦ e2 ⟧ m} {⟦ transExp e2 a ⟧ₜ mₜ} {a} m=mt refl refl
+   in cong₂ _+_ expEq1 expEq2
 
 -- Correctness of the program transformation.
 -- TODO(major): Implement.
 correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : 𝒜}
   → ⟨ s , m ⟩⇓ m'
   → ⟨ proj₁ (transStm s active) , mₜ ⟩⇓ₜ mₜ'
-  → m ==ₘ (memProj mₜ active)
-  → m' ==ₘ (memProj mₜ' (proj₂ (transStm s active)))
+  → m ==ₘ mₜ - active
+  → m' ==ₘ mₜ' - (proj₂ (transStm s active))
 
 correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   Assign
@@ -145,6 +159,9 @@ correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x
   Assignₜ 
   meq = {!   !}
 
+-- TODO(major): Now that I have a type definition for Lemma 3 in expEquality, I need to see how to use it
+-- here so that I know that d' is the same kind of rule as d.
+-- TODO(major): Apparently, I'll also need Lemma 4 for the end of the proof.
 correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfT x₁ d) d' meq = {! !}
 
 correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfF x₁ d) d' meq = {!   !}
