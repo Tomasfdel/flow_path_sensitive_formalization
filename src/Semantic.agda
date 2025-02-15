@@ -119,21 +119,43 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
 
 
 -- CORRECTNESS PROOF
--- TODO(major): Placeholder to be able to define the correctness proof. Define this.
-data _==ₘ_ : Memory → Memory → Set where
-  Default : {m m' : Memory} → m ==ₘ m'
+-- Memory equality definition.
+_==ₘ_ : (m m' : Memory) → Set
+m ==ₘ m' = ∀ x → lookup m x ≡ lookup m' x
 
 -- TODO(major): Implement.
 memProj : Memoryₜ → 𝒜 → Memory
 memProj =  {! !}
 
 -- Correctness of the program transformation.
--- TODO(question): Is there any way to put a name to the values used in the hypothesis types
--- so that I can put it a name (as in a let expression) instead of having to mention (transStm s active) multiple times?
 -- TODO(major): Implement.
 correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : 𝒜}
   → ⟨ s , m ⟩⇓ m'
   → ⟨ proj₁ (transStm s active) , mₜ ⟩⇓ₜ mₜ'
   → m ==ₘ (memProj mₜ active)
   → m' ==ₘ (memProj mₜ' (proj₂ (transStm s active)))
-correctness = {! !}
+
+correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
+  Assign
+  Assignₜ 
+  meq = {!   !}
+
+correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , suc (lookup a x) ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
+  AssignBr 
+  Assignₜ 
+  meq = {!   !}
+
+correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfT x₁ d) d' meq = {! !}
+
+correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfF x₁ d) d' meq = {!   !}
+
+correctness {While x s} {m} {m'} {mₜ} {mₜ'} {a} d d' meq = {! !}
+
+correctness {Seq s s₁} {m} {m'} {mₜ} {mₜ'} {a} 
+  (Seq {m = .m} {m' = m2} {m'' = .m'} d d₁) 
+  (Seqₜ {m = .mₜ} {m' = mt2} {m'' = .mₜ'} d' d'') 
+  meq = 
+    let h1 = correctness {s} {m} {m2} {mₜ} {mt2} d d' meq
+     in correctness d₁ d'' h1
+
+correctness {Skip} {m} {.m} {mₜ} {.mₜ} {a} Skip Skipₜ meq = meq
