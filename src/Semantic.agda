@@ -1,5 +1,6 @@
 module Semantic {n} where
 
+open import Data.Empty
 open import Data.Fin
   hiding (_+_)
 open import Data.List
@@ -43,8 +44,9 @@ data ⟨_,_⟩⇓_ : ASTStmS → Memory → Memory → Set where
   -- TODO(minor): How do I set the precedence for this to work properly using '⟦x := e⟧' instead of '⟦_:=_ x e⟧'  
   AssignBr : {m : Memory} {x : Fin n} {e : ASTExpS} 
     → ⟨ ⟦_:=_⟧ x e , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ m ]
-  IfT : {m m' : Memory} {e : ASTExpS} {s₁ s₂ : ASTStmS}
-    → ⟦ e ⟧ m ≢  0 
+  IfT : {m m' : Memory} {e : ASTExpS} {v : ℕ} {s₁ s₂ : ASTStmS}
+    → ⟦ e ⟧ m ≡ v
+    → v ≢  0 
     → ⟨ s₁ , m ⟩⇓ m' 
     → ⟨ If0 e s₁ s₂ , m ⟩⇓ m'  
   IfF : {m m' : Memory} {e : ASTExpS} {s₁ s₂ : ASTStmS}
@@ -100,8 +102,9 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
     → ⟨ SEQ s₁ s₂ , m ⟩⇓ₜ m'' 
   Assignₜ : {m : Memoryₜ} {x : Fin n × ℕ} {e : ASTExp} 
     → ⟨ ASSIGN x e , m ⟩⇓ₜ m [ x  ↦ ⟦ e ⟧ₜ m ]ₜ
-  IfTₜ : {m m' : Memoryₜ} {e : ASTExp} {s₁ s₂ : ASTStm}
-    → ⟦ e ⟧ₜ m ≢  0 
+  IfTₜ : {m m' : Memoryₜ} {e : ASTExp} {v : ℕ} {s₁ s₂ : ASTStm}
+    → ⟦ e ⟧ₜ m ≡ v
+    → v ≢  0 
     → ⟨ s₁ , m ⟩⇓ₜ m' 
     → ⟨ IF0 e s₁ s₂ , m ⟩⇓ₜ m'  
   IfFₜ : {m m' : Memoryₜ} {e : ASTExp} {s₁ s₂ : ASTStm}
@@ -159,14 +162,31 @@ correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x
   Assignₜ 
   meq = {!   !}
 
--- TODO(major): Now that I have a type definition for Lemma 3 in expEquality, I need to see how to use it
--- here so that I know that d' is the same kind of rule as d.
 -- TODO(major): Apparently, I'll also need Lemma 4 for the end of the proof.
-correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfT x₁ d) d' meq = {! !}
+correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
+  (IfT {.m} {.m'} {.cond} {v} {.sT} {.sF} em=v v<>0 d) 
+  (IfTₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {s₁} {s₂} em'=v' v'<>0 d') 
+  meq = {! !}
 
-correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfF x₁ d) d' meq = {!   !}
+correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
+  (IfT {.m} {.m'} {.cond} {v} {_} {_} em=v v<>0 d) 
+  (IfFₜ em'=0 d') 
+  meq = 
+    let em=em' = expEquality {cond} {m} {mₜ} {v} {0} {a} meq em=v em'=0
+     in ⊥-elim (v<>0 em=em')
 
-correctness {While x s} {m} {m'} {mₜ} {mₜ'} {a} d d' meq = {! !}
+correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
+  (IfF em=0 d) 
+  (IfTₜ {.mₜ} {.mₜ'} {_} {v} {_} {_} em'=v v<>0 d') 
+  meq = 
+    let em=em' = expEquality {cond} {m} {mₜ} {0} {v} {a} meq em=0 em'=v
+     in ⊥-elim (v<>0 (sym em=em'))
+
+correctness {If0 x s s₁} {m} {m'} {mₜ} {mₜ'} {a} (IfF x₁ d) (IfFₜ x₂ d') meq = {!   !}
+
+correctness {While x s} {m} {m'} {mₜ} {mₜ'} {a} (WhileT x₁ d d₁) d' meq = {!  !}
+
+correctness {While x s} {m} {.m} {mₜ} {mₜ'} {a} (WhileF x₁) d' meq = {!  !}
 
 correctness {Seq s s₁} {m} {m'} {mₜ} {mₜ'} {a} 
   (Seq {m = .m} {m' = m2} {m'' = .m'} d d₁) 
