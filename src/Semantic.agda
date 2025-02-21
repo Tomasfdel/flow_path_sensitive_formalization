@@ -6,8 +6,11 @@ open import Data.Fin
 open import Data.List
   hiding (lookup ; [_])
 open import Data.Nat 
+  hiding (_≟_)
 open import Data.Product 
 open import Data.Vec.Base
+open import Function
+open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality 
 
 open import AST {n}
@@ -144,6 +147,49 @@ expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ m)} {.(⟦ transExp (Add
       expEq2 = expEquality {e2} {m} {mₜ} {⟦ e2 ⟧ m} {⟦ transExp e2 a ⟧ₜ mₜ} {a} m=mt refl refl
    in cong₂ _+_ expEq1 expEq2
 
+-- TODO(minor): I should clean up these properties and probably move them to another file. 
+-- Γ[x↦st] x = st
+lookupx∘changex : 
+  {m v : ℕ} (index : Fin m) (vector : Vec ℕ m) 
+  → lookup (vector [ index ]≔ v) index ≡ v
+lookupx∘changex zero (head ∷ tail) = refl
+lookupx∘changex (suc x) (head ∷ tail) = lookupx∘changex x tail 
+
+-- x ≠ y ⇒ Γ[x↦st] y = Γ y
+lookupy∘changex : 
+  {m v : ℕ} (i1 i2 : Fin m) (vector : Vec ℕ m)
+  → i2 ≢  i1
+  → lookup (vector [ i1 ]≔ v) i2 ≡ lookup vector i2
+lookupy∘changex zero zero vector i2!=i1 = ⊥-elim (i2!=i1 refl)
+lookupy∘changex zero (suc x) (head ∷ tail) i2!=i1 = refl
+lookupy∘changex (suc x) zero (head ∷ tail) i2!=i1 = refl
+lookupy∘changex (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupy∘changex x y tail (i2!=i1 ∘ cong suc)  
+
+-- TODO(minor): I'll probably have to update the other function definitions to cover all cases with this property,
+--  but at least it works for now.
+listLookupx∘listUpdatex : 
+  {v : ℕ} (a : ℕ) (list : List ℕ) 
+  → lookupOrDefault a (safeListUpdate list a v) ≡ v
+listLookupx∘listUpdatex a [] = {!   !}
+listLookupx∘listUpdatex 0 (head ∷ tail) = refl
+listLookupx∘listUpdatex (suc n) (head ∷ tail) = listLookupx∘listUpdatex n tail
+
+lookupₜx∘changeₜx : 
+  {m v activeVar : ℕ} (index : Fin m) (vector : Vec (List ℕ) m) 
+  → lookupOrDefault activeVar (lookup (vector [ index ]≔ (safeListUpdate (lookup vector index) activeVar v)) index) ≡ v
+lookupₜx∘changeₜx {_} {_} {activeVar} zero (head ∷ tail) = listLookupx∘listUpdatex activeVar head
+lookupₜx∘changeₜx (suc x) (head ∷ tail) = lookupₜx∘changeₜx x tail 
+
+lookupₜy∘changeₜx : 
+  {m v activeVar activeVar2 : ℕ} (i1 i2 : Fin m) (vector : Vec (List ℕ) m) 
+  → i2 ≢  i1
+  → lookupOrDefault activeVar (lookup (vector [ i1 ]≔ (safeListUpdate (lookup vector i1) activeVar2 v)) i2) ≡ lookupOrDefault activeVar (lookup vector i2)
+lookupₜy∘changeₜx zero zero vector i2!=i1 = ⊥-elim (i2!=i1 refl)
+lookupₜy∘changeₜx zero (suc x) (head ∷ tail) i2!=i1 = refl
+lookupₜy∘changeₜx (suc x) zero (head ∷ tail) i2!=i1 = refl
+lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘changeₜx x y tail (i2!=i1 ∘ cong suc)  
+
+
 -- Correctness of the program transformation.
 -- TODO(major): Implement.
 correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : 𝒜}
@@ -155,14 +201,27 @@ correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : �
 correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   Assign
   Assignₜ 
-  meq = {!   !}
+  meq varName with varName ≟ x
+...              | yes vN=x = {!   !}
+-- TODO(major): This has an issue with identifying that varName and x are equal in the calls to the lookup... proofs.
+--                               trans 
+--                                 (trans 
+--                                   (lookupx∘changex varName m)
+--                                   (expEquality meq refl refl)
+--                                 ) 
+--                                 (sym (lookupₜx∘changeₜx varName mₜ))
+...              | no vN!=x = trans 
+                                (trans 
+                                  (lookupy∘changex x varName m vN!=x)
+                                  (meq varName)
+                                ) 
+                                (sym (lookupₜy∘changeₜx x varName mₜ vN!=x))
 
 correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , suc (lookup a x) ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   AssignBr 
   Assignₜ 
   meq = {!   !}
 
--- TODO(major): Apparently, I'll also need Lemma 4 for the end of the proof.
 correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfT {.m} {.m'} {.cond} {v} {.sT} {.sF} em=v v<>0 d) 
   (IfTₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {s₁} {s₂} em'=v' v'<>0 d') 
