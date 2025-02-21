@@ -201,15 +201,30 @@ correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : �
 correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   Assign
   Assignₜ 
+  -- TODO(minor): Rewrite this using a let and type explanations for the difficult terms like I did in AssignmentId.
   meq varName with varName ≟ x
-...              | yes vN=x = {!   !}
--- TODO(major): This has an issue with identifying that varName and x are equal in the calls to the lookup... proofs.
---                               trans 
---                                 (trans 
---                                   (lookupx∘changex varName m)
---                                   (expEquality meq refl refl)
---                                 ) 
---                                 (sym (lookupₜx∘changeₜx varName mₜ))
+...              | yes vN=x = trans 
+                                -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v'
+                                (trans 
+                                  -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v
+                                  (trans 
+                                  -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === lookup (m [ varName ]≔ ⟦ e ⟧ m) varName
+                                    (sym (cong (λ y → lookup (m [ y ]≔ ⟦ e ⟧ m) varName) vN=x))
+                                  -- lookup (m [ varName ]≔ v) varName ≡ v
+                                    (lookupx∘changex varName m)
+                                  )
+                                  -- v === v'
+                                  (expEquality {e} {m} {mₜ} meq refl refl)
+                                ) 
+                                -- v' === lookup (mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ) varName
+                                (trans 
+                                  -- v' === lookupOrDefault activeVar (lookup (mₜ [ varName ]≔ (safeListUpdate (lookup mₜ varName) activeVar v)) varName)
+                                  (sym (lookupₜx∘changeₜx varName mₜ))
+                                  -- lookupOrDefault activeVar (lookup (mₜ [ varName ]≔ (safeListUpdate (lookup mₜ varName) activeVar v)) varName)
+                                  -- ===
+                                  -- lookupOrDefault activeVar (lookup (mₜ [ x ]≔ (safeListUpdate (lookup mₜ x) (lookup a x) v)) varName)
+                                  (cong (λ y → lookupOrDefault (lookup a varName) (lookup (mₜ [ y ]≔ safeListUpdate (lookup mₜ y) (lookup a y) (⟦ transExp e a ⟧ₜ mₜ)) varName)) vN=x)
+                                )
 ...              | no vN!=x = trans 
                                 (trans 
                                   (lookupy∘changex x varName m vN!=x)
@@ -220,7 +235,9 @@ correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , looku
 correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , suc (lookup a x) ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   AssignBr 
   Assignₜ 
-  meq = {!   !}
+  meq varName with varName ≟ x
+...              | yes vN=x = {!   !}
+...              | no vN!=x = {!   !}
 
 correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfT {.m} {.m'} {.cond} {v} {.sT} {.sF} em=v v<>0 d) 
