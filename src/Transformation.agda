@@ -20,19 +20,12 @@ merge𝒜 [] [] = []
 merge𝒜 (h1 ∷ t1) (h2 ∷ t2) =
    (if h1 == h2 then h1 else (suc (h1 ⊔ h2))) ∷ (merge𝒜 t1 t2)
 
--- Returns a sequence of two statements, unless one of them is a 
--- SKIP, in which case the other is returned.
-simplifiedSeq : ASTStm → ASTStm → ASTStm
-simplifiedSeq SKIP s = s
-simplifiedSeq s SKIP = s
-simplifiedSeq s1 s2  = SEQ s1 s2
-
 assignActiveSetAux : {m : ℕ} → Vec (Fin n) m → Vec ℕ m → Vec ℕ m → ASTStm
 assignActiveSetAux _ [] [] = SKIP
 assignActiveSetAux (hInd ∷ tInd) (h1 ∷ t1) (h2 ∷ t2) = 
    let assignment = ASSIGN (hInd , h1) (VAR (hInd , h2)) 
        assignRest = assignActiveSetAux tInd t1 t2
-   in if h1 == h2 then assignRest else (simplifiedSeq assignment assignRest)
+   in if h1 == h2 then assignRest else (SEQ assignment assignRest)
 
 -- := definition for active sets from Figure 4 of the paper.
 _:=𝒜_ : 𝒜 → 𝒜 → ASTStm
@@ -61,14 +54,14 @@ transStm (If0 cond sT sF) active =
        (tST , active1) = transStm sT active
        (tSF , active2) = transStm sF active
        active3 = merge𝒜 active1 active2
-       trueBranch = simplifiedSeq tST (active3 :=𝒜 active1)
-       falseBranch = simplifiedSeq tSF (active3 :=𝒜 active2)
+       trueBranch = SEQ tST (active3 :=𝒜 active1)
+       falseBranch = SEQ tSF (active3 :=𝒜 active2)
    in (IF0 tCond trueBranch falseBranch , active3)
 transStm (While cond s) active =
    let (_ , active1) = transStm s active
        active2 = merge𝒜 active active1
        (tS , active3) = transStm s active2
        tCond = transExp cond active2
-   in (simplifiedSeq (active2 :=𝒜 active) 
+   in (SEQ (active2 :=𝒜 active) 
                           (WHILE tCond 
-                                 (simplifiedSeq tS (active2 :=𝒜 active3))) , active2)
+                                 (SEQ tS (active2 :=𝒜 active3))) , active2)
