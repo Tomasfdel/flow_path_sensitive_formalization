@@ -341,7 +341,30 @@ correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
 
 correctness {While x s} {m} {m'} {mₜ} {mₜ'} {a} (WhileT x₁ d d₁) d' meq = {!  !}
 
-correctness {While x s} {m} {.m} {mₜ} {mₜ'} {a} (WhileF x₁) d' meq = {!  !}
+correctness {While cond s} {m} {m'} {mₜ} {mₜ'} {a} 
+  (WhileT {.m} {_} {_} {.cond} {v} {_} em=v v<>0 _ _) 
+  (Seqₜ d' (WhileFₜ em'=0)) 
+  meq = 
+    let a' = merge𝒜 a (proj₂ (transStm s a))
+        𝒜memEq = :=𝒜-memEq {a} {a'} {mₜ} {mₜ'} d'
+        em=em' = expEquality {cond} {m} {_} {v} {0} {_} (==ₘ-trans {m} {mₜ} {mₜ'} {a} {a'} meq 𝒜memEq) em=v em'=0
+      in ⊥-elim (v<>0 em=em')
+
+correctness {While cond s} {m} {.m} {mₜ} {mₜ'} {a} 
+  (WhileF {.m} {.cond} {.s} em=0) 
+  (Seqₜ {m1} {m2} {m3} d' (WhileTₜ {_} {_} {_} {_} {v} {_} em'=v v<>0 _ _)) 
+  meq = 
+    let a' = merge𝒜 a (proj₂ (transStm s a))
+        𝒜memEq = :=𝒜-memEq {a} {a'} {mₜ} {m2} d'
+        em=em' = expEquality {cond} {m} {_} {0} {v} {_} (==ₘ-trans {m} {mₜ} {m2} {a} {a'} meq 𝒜memEq) em=0 em'=v
+      in ⊥-elim (v<>0 (sym em=em'))
+
+correctness {While cond s} {m} {.m} {mₜ} {mₜ'} {a} 
+  (WhileF x₁) 
+  (Seqₜ d' (WhileFₜ x₂)) 
+  meq = let a' = merge𝒜 a (proj₂ (transStm s a))
+            𝒜memEq = :=𝒜-memEq {a} {a'} {mₜ} {mₜ'} d'
+         in ==ₘ-trans {m} {mₜ} {mₜ'} {a} {a'} meq 𝒜memEq
 
 correctness {Seq s s₁} {m} {m'} {mₜ} {mₜ'} {a} 
   (Seq {m = .m} {m' = m2} {m'' = .m'} d d₁) 
