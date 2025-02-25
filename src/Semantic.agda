@@ -56,8 +56,9 @@ data ⟨_,_⟩⇓_ : ASTStmS → Memory → Memory → Set where
     → ⟦ e ⟧ m ≡ 0 
     → ⟨ s₂ , m ⟩⇓ m' 
     → ⟨ If0 e s₁ s₂ , m ⟩⇓ m'  
-  WhileT : {m m' m'' : Memory} {e : ASTExpS} {s : ASTStmS}
-    → ⟦ e ⟧ m ≢  0 
+  WhileT : {m m' m'' : Memory} {e : ASTExpS} {v : ℕ} {s : ASTStmS}
+    → ⟦ e ⟧ m ≡ v
+    → v ≢  0 
     → ⟨ s , m ⟩⇓ m'  
     → ⟨ While e s , m' ⟩⇓ m'' 
     → ⟨ While e s , m ⟩⇓ m''
@@ -114,8 +115,9 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
     → ⟦ e ⟧ₜ m ≡ 0 
     → ⟨ s₂ , m ⟩⇓ₜ m' 
     → ⟨ IF0 e s₁ s₂ , m ⟩⇓ₜ m'  
-  WhileTₜ : {m m' m'' : Memoryₜ} {e : ASTExp} {s : ASTStm}
-    → ⟦ e ⟧ₜ m ≢  0 
+  WhileTₜ : {m m' m'' : Memoryₜ} {e : ASTExp} {v : ℕ} {s : ASTStm}
+    → ⟦ e ⟧ₜ m ≡ v
+    → v ≢  0  
     → ⟨ s , m ⟩⇓ₜ m'  
     → ⟨ WHILE e s , m' ⟩⇓ₜ m'' 
     → ⟨ WHILE e s , m ⟩⇓ₜ m''
