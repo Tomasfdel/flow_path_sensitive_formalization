@@ -147,7 +147,6 @@ m1ₜ - a1 ==ₘₜ m2ₜ - a2 = ∀ x → lookupₜ m1ₜ a1 x ≡ lookupₜ m2
 ==ₘ-trans meq meq2 var = trans (meq var) (meq2 var)   
 
 -- Semantic equality of expression and its transformed counterpart.
--- TODO(major): This only returns the first half of the thesis from the Lemma 3. I'll need to define the second half at some point.
 expEquality : {e : ASTExpS} {m : Memory} {mₜ : Memoryₜ} {v v' : ℕ} {active : 𝒜}
   → m ==ₘ mₜ - active
   → ⟦ e ⟧ m ≡ v 
@@ -208,8 +207,18 @@ lookupₜy∘changeₜx zero (suc x) (head ∷ tail) i2!=i1 = refl
 lookupₜy∘changeₜx (suc x) zero (head ∷ tail) i2!=i1 = refl
 lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘changeₜx x y tail (i2!=i1 ∘ cong suc)  
 
+-- Correctness of the program transformation for the While case.
+whileCorrectness : {e : ASTExpS} {s : ASTStmS} {e' : ASTExp} {s' : ASTStm} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {A A₁ A₂ : 𝒜}
+  → ⟨ While e s , m ⟩⇓ m'
+  → ⟨ WHILE e' s' , mₜ ⟩⇓ₜ mₜ' 
+  → e' ≡ transExp e A₁
+  → s' ≡ SEQ (proj₁ (transStm s A₁)) (A₁ :=𝒜 A₂)
+  → A₁ ≡ merge𝒜 A (proj₂ (transStm s A))
+  → A₂ ≡ proj₂ (transStm s A₁)
+  → m ==ₘ mₜ - A₁
+  → m' ==ₘ mₜ' - A₁
+
 -- Correctness of the program transformation.
--- TODO(major): Implement.
 correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : 𝒜}
   → ⟨ s , m ⟩⇓ m'
   → ⟨ proj₁ (transStm s active) , mₜ ⟩⇓ₜ mₜ'
@@ -305,6 +314,8 @@ correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {mₜ'} {a}
                                   (cong (λ y → lookupOrDefault y (lookup mₜ' varName)) (sym (lookupy∘changex x varName a vN!=x)))  
                                 )
 
+-- TODO(minor): I tried to replace some of the values in the long expression of IfTₜ but apparently if I use a dot I need
+-- to use the full expression, and if I don't use it I cannot have functions as part of the pattern. Is there a nicer way of writing that expression?
 correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfT {.m} {.m'} {.cond} {v} {.sT} {.sF} em=v v<>0 d) 
   (IfTₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {v'} {.(SEQ (proj₁ (transStm sT a)) (merge𝒜 (proj₂ (transStm sT a)) (proj₂ (transStm sF a)) :=𝒜 proj₂ (transStm sT a)))} {sF'} em'=v' v'<>0 (Seqₜ {m1} {m2} {m3} d' d''))
@@ -341,32 +352,10 @@ correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
         mt1a'=mt2a'' = :=𝒜-memEq {aF} {a'} d''
       in ==ₘ-trans {m'} {m2} {mₜ'} {aF} {a'} m1=mt1a' mt1a'=mt2a''
 
-correctness {While x s} {m} {m'} {mₜ} {mₜ'} {a} (WhileT x₁ d d₁) d' meq = {!  !}
-
-correctness {While cond s} {m} {m'} {mₜ} {mₜ'} {a} 
-  (WhileT {.m} {_} {_} {.cond} {v} {_} em=v v<>0 _ _) 
-  (Seqₜ d' (WhileFₜ em'=0)) 
-  meq = 
-    let a' = merge𝒜 a (proj₂ (transStm s a))
-        𝒜memEq = :=𝒜-memEq {a} {a'} {mₜ} {mₜ'} d'
-        em=em' = expEquality {cond} {m} {_} {v} {0} {_} (==ₘ-trans {m} {mₜ} {mₜ'} {a} {a'} meq 𝒜memEq) em=v em'=0
-      in ⊥-elim (v<>0 em=em')
-
-correctness {While cond s} {m} {.m} {mₜ} {mₜ'} {a} 
-  (WhileF {.m} {.cond} {.s} em=0) 
-  (Seqₜ {m1} {m2} {m3} d' (WhileTₜ {_} {_} {_} {_} {v} {_} em'=v v<>0 _ _)) 
-  meq = 
-    let a' = merge𝒜 a (proj₂ (transStm s a))
-        𝒜memEq = :=𝒜-memEq {a} {a'} {mₜ} {m2} d'
-        em=em' = expEquality {cond} {m} {_} {0} {v} {_} (==ₘ-trans {m} {mₜ} {m2} {a} {a'} meq 𝒜memEq) em=0 em'=v
-      in ⊥-elim (v<>0 (sym em=em'))
-
-correctness {While cond s} {m} {.m} {mₜ} {mₜ'} {a} 
-  (WhileF x₁) 
-  (Seqₜ d' (WhileFₜ x₂)) 
-  meq = let a' = merge𝒜 a (proj₂ (transStm s a))
-            𝒜memEq = :=𝒜-memEq {a} {a'} {mₜ} {mₜ'} d'
-         in ==ₘ-trans {m} {mₜ} {mₜ'} {a} {a'} meq 𝒜memEq
+correctness {While cond s} {m} {m'} {mₜ} {mₜ'} {active} d (Seqₜ {.mₜ} {mₜ1} {.mₜ'} dₜ dₜ') meq = 
+  let A₁ = merge𝒜 active (proj₂ (transStm s active))
+      mtA=mt1A1 = :=𝒜-memEq {active} {A₁} {mₜ} {mₜ1} dₜ
+   in whileCorrectness d dₜ' refl refl refl refl (==ₘ-trans {m} {mₜ} {mₜ1} {active} {A₁} meq mtA=mt1A1)
 
 correctness {Seq s s₁} {m} {m'} {mₜ} {mₜ'} {a} 
   (Seq {m = .m} {m' = m2} {m'' = .m'} d d₁) 
@@ -376,3 +365,47 @@ correctness {Seq s s₁} {m} {m'} {mₜ} {mₜ'} {a}
      in correctness d₁ d'' h1
 
 correctness {Skip} {m} {.m} {mₜ} {.mₜ} {a} Skip Skipₜ meq = meq
+
+-- whileCorrectness : {e : ASTExpS} {s : ASTStmS} {e' : ASTExp} {s' : ASTStm} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {A A₁ A₂ : 𝒜}
+--   → ⟨ While e s , m ⟩⇓ m'
+--   → ⟨ WHILE e' s' , mₜ ⟩⇓ₜ mₜ' 
+--   → e' ≡ transExp e A₁
+--   → s' ≡ SEQ (proj₁ (transStm s A₁)) (A₁ :=𝒜 A₂)
+--   → A₁ ≡ merge𝒜 A (proj₂ (transStm s A))
+--   → A₂ ≡ proj₂ (transStm s A₁)
+--   → m ==ₘ mₜ - A₁
+--   → m' ==ₘ mₜ' - A₁
+
+whileCorrectness {e} {s} {e'} {s'} {m} {m'} {mₜ} {mₜ'} {A} {A₁} {A₂} 
+  (WhileF em=0) 
+  (WhileFₜ em'=0) 
+  refl refl refl refl
+  meq = meq
+
+whileCorrectness {e} {s} {e'} {s'} {m} {m'} {mₜ} {mₜ'} {A} {A₁} {A₂} 
+  (WhileF em=0) 
+  (WhileTₜ {_} {_} {_} {_} {v} {_} em'=v v<>0 _ _)
+  refl refl refl refl
+  meq = 
+    let em=em' = expEquality {e} {m} {_} {0} {v} {_} meq em=0 em'=v
+     in ⊥-elim (v<>0 (sym em=em'))
+
+whileCorrectness {e} {s} {e'} {s'} {m} {m'} {mₜ} {mₜ'} {A} {A₁} {A₂} 
+  (WhileT {.m} {_} {_} {.e} {v} {_} em=v v<>0 _ _) 
+  (WhileFₜ em'=0) 
+  refl refl refl refl
+  meq = 
+    let em=em' = expEquality {e} {m} {_} {v} {0} {_} meq em=v em'=0
+     in ⊥-elim (v<>0 em=em')
+
+whileCorrectness {e} {s} {e'} {s'} {m} {m'} {mₜ} {mₜ'} {A} {A₁} {A₂} 
+  (WhileT {.m} {m1} {.m'} {.e} {_} {.s} _ _ d d') 
+  (WhileTₜ {.mₜ} {mₜ2} {.mₜ'} {cond'} {_} {s'} _ _ (Seqₜ {.mₜ} {mₜ1} {.mₜ2} dₜ' dₜ'') dₜ''')
+  refl refl refl refl
+  meq = 
+        -- m1 ==ₘ mₜ1 - A2
+    let h = correctness {s} {m} {m1} {mₜ} {mₜ1} {A₁} d dₜ' meq
+        -- mt1 - A2 ==ₘₜ mt2 - A1
+        mt1A2=mt2A1 = :=𝒜-memEq {A₂} {A₁} {mₜ1} {mₜ2} dₜ''
+        -- m' ==ₘ mₜ' - A1
+     in whileCorrectness d' dₜ''' refl refl refl refl (==ₘ-trans {m1} {mₜ1} {mₜ2} {A₂} {A₁} h mt1A2=mt2A1)
