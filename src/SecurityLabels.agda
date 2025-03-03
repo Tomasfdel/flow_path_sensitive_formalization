@@ -1,5 +1,9 @@
 module SecurityLabels {n} where
 
+open import Data.Fin
+open import Data.Nat
+open import Data.Product
+
 open import AST {n}
 open import VariableSet {n}
 
@@ -25,3 +29,7 @@ labelVariables (Join l1 l2) = (labelVariables l1) unionᵥₛ (labelVariables l2
 -- but ideally this would be something like a Map from Fin n × ℕ to SecurityLabel.
 TypingEnvironment : Set _
 TypingEnvironment = SecurityLabel 
+
+-- TODO(minor): Same as above
+findType : TypingEnvironment → Fin n × ℕ → SecurityLabel
+findType Γ _ = Γ
