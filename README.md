@@ -10,13 +10,14 @@ This formalization has been tested using
 The Agda modules are organized according to the following structure:
 
 * Base 
+    * AST
     * AssignmentId
-    * AST 
     * Liveness
     * Predicates
     * SecurityLabels
     * Semantic
     * Transformation
+    * TypeSystem
     * VariableSet
 
 ## Module Content
@@ -36,5 +37,7 @@ The Agda modules are organized according to the following structure:
 * **Liveness.agda**: Variable liveness analysis, which is later used in the typing rules. _(Section 5.4)_
 
 * **Predicates.agda**: Generation of program state predicates that are true for each assignment statement, also used in the typing rules. _(Section 5.4)_
+
+* **TypeSystem.agda**: Definition of the type system for transformed programs. _(Section 5.5)_
 
 * **VariableSet.agda**: Utility module defining finite sets of program variables.
