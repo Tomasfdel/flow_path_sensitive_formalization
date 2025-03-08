@@ -24,8 +24,8 @@ merge𝒜 (h1 ∷ t1) (h2 ∷ t2) =
 
 activeSetVarAssignment : Fin n → 𝒜 → 𝒜 → ASTStm
 activeSetVarAssignment hInd a a' with lookup a hInd ≟ lookup a' hInd 
-...                             | yes lah=la'h = SKIP
-...                             | no lah<>la'h = ASSIGN (hInd , (lookup a hInd)) (VAR (hInd , (lookup a hInd)))
+...                             | yes _ = SKIP
+...                             | no _  = ASSIGN (hInd , (lookup a hInd)) (VAR (hInd , (lookup a' hInd)))
 
 assignActiveSetAux : {m : ℕ} → Vec (Fin n) m → 𝒜 → 𝒜 → ASTStm
 assignActiveSetAux [] _ _ = SKIP
