@@ -3,10 +3,11 @@ module Semantic {n} where
 open import Data.Empty
 open import Data.Fin
   hiding (_+_)
+  renaming (_≟_ to _≟f_)
 open import Data.List
   hiding (lookup ; [_])
 open import Data.Nat 
-  hiding (_≟_)
+  renaming (_≟_ to _≟ₙ_)
 open import Data.Product 
 open import Data.Vec.Base
 open import Function
@@ -159,12 +160,6 @@ expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ m)} {.(⟦ transExp (Add
       expEq2 = expEquality {e2} {m} {mₜ} {⟦ e2 ⟧ m} {⟦ transExp e2 a ⟧ₜ mₜ} {a} m=mt refl refl
    in cong₂ _+_ expEq1 expEq2
 
--- TODO(major): Implement.
-:=𝒜-memEq : {a a' : 𝒜} {mₜ mₜ' : Memoryₜ} 
-  → ⟨ a' :=𝒜 a , mₜ ⟩⇓ₜ mₜ'
-  → mₜ - a ==ₘₜ mₜ' - a'
-:=𝒜-memEq {a} {a'} {mₜ} {mₜ'} d = {! !}
-
 -- TODO(minor): I should clean up these properties and probably move them to another file. 
 -- Γ[x↦st] x = st
 lookupx∘changex : 
@@ -175,7 +170,7 @@ lookupx∘changex (suc x) (head ∷ tail) = lookupx∘changex x tail
 
 -- x ≠ y ⇒ Γ[x↦st] y = Γ y
 lookupy∘changex : 
-  {m v : ℕ} (i1 i2 : Fin m) (vector : Vec ℕ m)
+  {A : Set} {m : ℕ} {v : A} (i1 i2 : Fin m) (vector : Vec A m)
   → i2 ≢  i1
   → lookup (vector [ i1 ]≔ v) i2 ≡ lookup vector i2
 lookupy∘changex zero zero vector i2!=i1 = ⊥-elim (i2!=i1 refl)
@@ -207,6 +202,28 @@ lookupₜy∘changeₜx zero (suc x) (head ∷ tail) i2!=i1 = refl
 lookupₜy∘changeₜx (suc x) zero (head ∷ tail) i2!=i1 = refl
 lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘changeₜx x y tail (i2!=i1 ∘ cong suc)  
 
+𝒜memEqSameLookup : {l : ℕ} {varName : Fin n} {indices : Vec (Fin n) l} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ} 
+  → ⟨ assignActiveSetAux indices a a' , mₜ ⟩⇓ₜ mₜ'
+  → lookup a varName ≡ lookup a' varName
+  → lookup mₜ varName ≡ lookup mₜ' varName
+𝒜memEqSameLookup {_} {varName} {[]} {_} {_} {mₜ} {.mₜ} Skipₜ _ = cong (\m → lookup m varName) {mₜ} refl 
+𝒜memEqSameLookup {_} {varName} {index ∷ is} {a} {a'} {mₜ} {mₜ'} (Seqₜ d d') lav=la'v with lookup a index ≟ₙ lookup a' index | varName ≟f index
+𝒜memEqSameLookup {_} {varName} {index ∷ is} {a} {a'} {mₜ} {mₜ'} (Seqₜ Skipₜ d') lav=la'v   | yes lai=la'i | _ = 
+  𝒜memEqSameLookup d' lav=la'v
+𝒜memEqSameLookup {_} {varName} {index ∷ is} {a} {a'} {mₜ} {mₜ'} (Seqₜ d d') lav=la'v      | no lai<>la'i | yes vN=i = 
+  ⊥-elim (lai<>la'i ((subst (\x → lookup a x ≡ lookup a' x) vN=i lav=la'v)))
+𝒜memEqSameLookup {_} {varName} {index ∷ is} {a} {a'} {mₜ} {mₜ'} (Seqₜ Assignₜ d') lav=la'v | no _       | no vN<>i =
+  trans (sym (lookupy∘changex index varName mₜ vN<>i)) (𝒜memEqSameLookup d' lav=la'v) 
+
+-- TODO(major): Implement.
+:=𝒜-memEq : {a a' : 𝒜} {mₜ mₜ' : Memoryₜ} 
+  → ⟨ a' :=𝒜 a , mₜ ⟩⇓ₜ mₜ'
+  → mₜ - a ==ₘₜ mₜ' - a'
+:=𝒜-memEq {a} {a'} {mₜ} {mₜ'} d varName with lookup a' varName ≟ₙ lookup a varName
+...                                    | yes la'v=lav = let lmtv=lmt'v = 𝒜memEqSameLookup {n} {varName} {_} {a'} {a} {mₜ} {mₜ'} d la'v=lav
+                                                         in cong₂ (\x y → lookupOrDefault x y) (sym la'v=lav) lmtv=lmt'v
+...                                    | no la'v<>lav = {!   !}            
+
 -- Correctness of the program transformation for the While case.
 whileCorrectness : {e : ASTExpS} {s : ASTStmS} {e' : ASTExp} {s' : ASTStm} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {A A₁ A₂ : 𝒜}
   → ⟨ While e s , m ⟩⇓ m'
@@ -229,7 +246,7 @@ correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : �
 correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   Assign
   Assignₜ 
-  meq varName with varName ≟ x
+  meq varName with varName ≟f x
 ...              | yes vN=x = trans 
                                 -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v'
                                 (trans 
@@ -263,7 +280,7 @@ correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , looku
 correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {mₜ'} {a} 
   AssignBr 
   Assignₜ 
-  meq varName with varName ≟ x
+  meq varName with varName ≟f x
 ...              | yes vN=x = trans 
                                 -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v'
                                 (trans 

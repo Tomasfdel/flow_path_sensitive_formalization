@@ -3,9 +3,11 @@ module Transformation {n} where
 open import Agda.Builtin.Nat
 open import Data.Bool.Base
 open import Data.Fin 
+  hiding (_≟_)
 open import Data.Nat 
 open import Data.Product 
 open import Data.Vec.Base
+open import Relation.Nullary
 
 open import AST {n}
 
@@ -20,12 +22,14 @@ merge𝒜 [] [] = []
 merge𝒜 (h1 ∷ t1) (h2 ∷ t2) =
    (if h1 == h2 then h1 else (suc (h1 ⊔ h2))) ∷ (merge𝒜 t1 t2)
 
-assignActiveSetAux : {m : ℕ} → Vec (Fin n) m → Vec ℕ m → Vec ℕ m → ASTStm
-assignActiveSetAux _ [] [] = SKIP
-assignActiveSetAux (hInd ∷ tInd) (h1 ∷ t1) (h2 ∷ t2) = 
-   let assignment = ASSIGN (hInd , h1) (VAR (hInd , h2)) 
-       assignRest = assignActiveSetAux tInd t1 t2
-   in if h1 == h2 then assignRest else (SEQ assignment assignRest)
+activeSetVarAssignment : Fin n → 𝒜 → 𝒜 → ASTStm
+activeSetVarAssignment hInd a a' with lookup a hInd ≟ lookup a' hInd 
+...                             | yes lah=la'h = SKIP
+...                             | no lah<>la'h = ASSIGN (hInd , (lookup a hInd)) (VAR (hInd , (lookup a hInd)))
+
+assignActiveSetAux : {m : ℕ} → Vec (Fin n) m → 𝒜 → 𝒜 → ASTStm
+assignActiveSetAux [] _ _ = SKIP
+assignActiveSetAux (hInd ∷ tInd) a a' = SEQ (activeSetVarAssignment hInd a a') (assignActiveSetAux tInd a a')
 
 -- := definition for active sets from Figure 4 of the paper.
 _:=𝒜_ : 𝒜 → 𝒜 → ASTStm
