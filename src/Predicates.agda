@@ -76,5 +76,5 @@ populatePredicateVector SKIP predicate predicateVector =
 -- position is a predicate that is always true before the execution of the n-th assignment 
 -- of the program. 
 generatePredicates : {t : ℕ} → ASTStmId {t} → Vec Predicate t
-generatePredicates statement =
-    proj₂ (populatePredicateVector statement True (Data.Vec.Base.replicate True))
+generatePredicates {t} statement =
+    proj₂ (populatePredicateVector statement True (Data.Vec.Base.replicate t True))

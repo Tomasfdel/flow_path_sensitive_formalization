@@ -18,6 +18,7 @@ open import Function.Base
 open import Relation.Binary.PropositionalEquality
   hiding ([_])
 open import Relation.Nullary
+  hiding (True)
 
 open import AssignmentId {n}
 open import AST {n}
@@ -122,9 +123,9 @@ typeStatementAux Γ pc SKIP P L = just (SKIP {_} {Γ} {pc} {P} {L} , [])
 -- Checks if the given program can be typed under the type system after applying the transformation.
 -- In case it can, a proof with the typing rules applied is returned.
 typeStatement : (stm : ASTStmS) 
-  → Maybe ((Label Low) , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transStm stm (replicate zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate zero)))))) , (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transStm stm (replicate zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate zero)))))) True (replicate True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transStm stm (replicate zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate zero)))))) (Label Low) (fromActiveSetᵥₛ (proj₂ (transStm stm (replicate zero)))) (replicate emptyᵥₛ))) × List ProofObligation)
+  → Maybe ((Label Low) , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate n zero)))))) , (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate n zero)))))) True (replicate (suc (assignCount (proj₁ (transStm stm (replicate n zero))))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate n zero)))))) (Label Low) (fromActiveSetᵥₛ (proj₂ (transStm stm (replicate n zero)))) (replicate (suc (assignCount (proj₁ (transStm stm (replicate n zero))))) emptyᵥₛ))) × List ProofObligation)
 typeStatement stm = 
-  let stmTrans , active = transStm stm (replicate zero)
+  let stmTrans , active = transStm stm (replicate n zero)
       stmId = identifyAssignments stmTrans
       predicates = generatePredicates stmId
       liveSets = livenessAnalysis stmId active (Label Low) 

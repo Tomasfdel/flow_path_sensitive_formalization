@@ -78,6 +78,6 @@ livenessIteration condition body typeEnv nextLiveIn assignLiveOuts =
 -- Given a program statement, returns a vector of variable sets so that the element in its n-th
 -- position is the liveOut set of the n-th assignment of the program. 
 livenessAnalysis : {t : ℕ} → ASTStmId {t} → 𝒜 → TypingEnvironment → Vec VariableSet t
-livenessAnalysis statement activeSet typeEnv = 
-    proj₂ (livenessAnalysisAux statement typeEnv (fromActiveSetᵥₛ activeSet) (replicate emptyᵥₛ))
+livenessAnalysis {t} statement activeSet typeEnv = 
+    proj₂ (livenessAnalysisAux statement typeEnv (fromActiveSetᵥₛ activeSet) (replicate t emptyᵥₛ))
  

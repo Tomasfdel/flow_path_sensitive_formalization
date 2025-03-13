@@ -4,7 +4,7 @@ Agda formalization of a static information flow analysis presented in the "Towar
 
 ## Installation
 This formalization has been tested using 
-<a href="https://agda.readthedocs.io/en/v2.6.3/getting-started/installation.html"> Agda 2.6.3 </a> and the Agda standard library v1.7.2. 
+<a href="https://agda.readthedocs.io/en/v2.7.0/getting-started/installation.html"> Agda 2.7.0 </a> and the Agda standard library v2.2. 
 
 ## Code Structure
 The Agda modules are organized according to the following structure:
