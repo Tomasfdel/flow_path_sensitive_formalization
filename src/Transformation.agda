@@ -5,9 +5,12 @@ open import Data.Bool.Base
 open import Data.Fin 
   hiding (_≟_)
 open import Data.Nat 
+  renaming (_<_ to _<ₙ_)
+open import Data.Nat.Properties
 open import Data.Product 
 open import Data.Vec.Base
 open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality 
 
 open import AST {n}
 
@@ -27,13 +30,21 @@ activeSetVarAssignment hInd a a' with lookup a hInd ≟ lookup a' hInd
 ...                             | yes _ = SKIP
 ...                             | no _  = ASSIGN (hInd , (lookup a hInd)) (VAR (hInd , (lookup a' hInd)))
 
-assignActiveSetAux : {m : ℕ} → Vec (Fin n) m → 𝒜 → 𝒜 → ASTStm
-assignActiveSetAux [] _ _ = SKIP
-assignActiveSetAux (hInd ∷ tInd) a a' = SEQ (activeSetVarAssignment hInd a a') (assignActiveSetAux tInd a a')
+-- TODO(minor): Use a let expression to simplify the last line a little bit.
+assignActiveSetAux : {n' : ℕ} (m : ℕ) → m <ₙ n → 𝒜 → 𝒜 → n ≡ (suc n') → ASTStm
+assignActiveSetAux zero z<n a a' n=sn' = activeSetVarAssignment (fromℕ< z<n) a a'
+assignActiveSetAux (suc m) sm<n a a' n=sn' = SEQ (activeSetVarAssignment (fromℕ< sm<n) a a') 
+                                                 (assignActiveSetAux m (subst (\x → m <ₙ x) (sym n=sn') (m<n⇒m<1+n(<-pred (subst (\x → suc m <ₙ x) n=sn' sm<n)))) a a' n=sn')
+
+0<n=>n=sn' : {m : ℕ} → zero <ₙ m → Σ[ m' ∈ ℕ ] (m ≡ suc m')
+0<n=>n=sn' (s≤s {zero} {n'} z≤n) = n' , refl
 
 -- := definition for active sets from Figure 4 of the paper.
 _:=𝒜_ : 𝒜 → 𝒜 → ASTStm
-_:=𝒜_ = assignActiveSetAux (allFin n)
+a :=𝒜 a' with n ≟ zero 
+...    | no n<>0 = let n' , n=sn' = 0<n=>n=sn' (n≢0⇒n>0 n<>0)
+                    in assignActiveSetAux {n'} n' (subst (\x → n' <ₙ x) (sym n=sn') (n<1+n n')) a a' n=sn'
+...    | yes _ = SKIP
 
 -- Expressions transformation.
 transExp : ASTExpS → 𝒜 → ASTExp
