@@ -10,8 +10,8 @@ This formalization has been tested using
 The Agda modules are organized according to the following structure:
 
 * Base 
-    * AST
     * AssignmentId
+    * AST
     * Liveness
     * Predicates
     * SecurityLabels
