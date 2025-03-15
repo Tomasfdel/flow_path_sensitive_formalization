@@ -1,7 +1,6 @@
 module Predicates {n} where
 
 open import Data.Bool.Base
-open import Data.Fin 
 open import Data.List.Base
 open import Data.Nat
 open import Data.Product
@@ -21,7 +20,7 @@ simplifyAnd True pred = pred
 simplifyAnd pred True = pred
 simplifyAnd pred1 pred2 = And pred1 pred2
 
-removePredicatesWithVariable : Predicate → Fin n × ℕ → Predicate
+removePredicatesWithVariable : Predicate → TransVariable → Predicate
 removePredicatesWithVariable True _ = True
 removePredicatesWithVariable predicate@(ExpZero expression) variableName = 
     if variableName elemᵥₛ (expressionVariables expression) then True else predicate

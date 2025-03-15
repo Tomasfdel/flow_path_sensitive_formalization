@@ -9,25 +9,26 @@ open import Data.List.Base
 open import Data.Product
 open import Function.Base
 
--- TODO(minor): Placeholder implementation with lists. I should try to implement it with AVL Sets later.
+TransVariable : Set _
+TransVariable = Fin n × ℕ
 
 VariableSet : Set _
-VariableSet = List (Fin n × ℕ)
+VariableSet = List TransVariable
 
 -- Variable equality.
-_==ᵥ_ : Fin n × ℕ → Fin n × ℕ → Bool
+_==ᵥ_ : TransVariable → TransVariable → Bool
 (f1 , n1) ==ᵥ (f2 , n2) = (toℕ f1 == toℕ f2) ∧ (n1 == n2)
 
 -- Element check.
-_elemᵥₛ_ : Fin n × ℕ → VariableSet → Bool
+_elemᵥₛ_ : TransVariable → VariableSet → Bool
 _ elemᵥₛ [] = false
 v1 elemᵥₛ (v2 ∷ vs) = (v1 ==ᵥ v2) ∨ (v1 elemᵥₛ vs) 
 
 -- Conversion from and to lists.
-fromListᵥₛ : List (Fin n × ℕ) → VariableSet
+fromListᵥₛ : List TransVariable → VariableSet
 fromListᵥₛ = foldr (\elem vs → if elem elemᵥₛ vs then vs else elem ∷ vs) [] 
 
-toListᵥₛ : VariableSet → List (Fin n × ℕ)
+toListᵥₛ : VariableSet → List TransVariable
 toListᵥₛ = id
 
 -- Empty set.
@@ -38,11 +39,11 @@ emptyᵥₛ = fromListᵥₛ []
 sizeᵥₛ : VariableSet → ℕ
 sizeᵥₛ = length 
 
-singletonᵥₛ : Fin n × ℕ → VariableSet
+singletonᵥₛ : TransVariable → VariableSet
 singletonᵥₛ x = fromListᵥₛ (x ∷ [])
 
 -- Element removal.
-popᵥₛ : Fin n × ℕ → VariableSet → VariableSet
+popᵥₛ : TransVariable → VariableSet → VariableSet
 popᵥₛ _ [] = []
 popᵥₛ v1 (v2 ∷ vs) = if v1 ==ᵥ v2 then vs else v2 ∷ (popᵥₛ v1 vs)
 

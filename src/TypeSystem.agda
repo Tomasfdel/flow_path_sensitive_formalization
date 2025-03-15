@@ -41,14 +41,14 @@ record ProofObligation : Set where
 data _⊦_-_ : TypingEnvironment → ASTExp → SecurityLabel → Set where
   CONST : {Γ : TypingEnvironment} {n : ℕ} 
     → Γ ⊦ INTVAL n - Label Low
-  VAR : {Γ : TypingEnvironment} {v : Fin n × ℕ}
+  VAR : {Γ : TypingEnvironment} {v : TransVariable}
     → Γ ⊦ VAR v - findType Γ v
   OP : {Γ : TypingEnvironment} {e e' : ASTExp} {τ τ' : SecurityLabel}
     → Γ ⊦ e - τ
     → Γ ⊦ e' - τ'
     → Γ ⊦ ADD e e' - Join τ τ'
 
-variableNotInFreeSets : Fin n × ℕ → TypingEnvironment → VariableSet → Set
+variableNotInFreeSets : TransVariable → TypingEnvironment → VariableSet → Set
 variableNotInFreeSets varName Γ varSet = 
   any (\v → varName elemᵥₛ (labelVariables (findType Γ v))) (toListᵥₛ varSet) ≡ false
 
@@ -67,7 +67,7 @@ data _,_⊦_,_,_ : {t : ℕ} → TypingEnvironment → SecurityLabel → ASTStmI
     → Γ , (Join τ pc) ⊦ sT , P , L
     → Γ , (Join τ pc) ⊦ sF , P , L
     → Γ , pc ⊦ IF0 cond sT sF , P , L
-  ASSIGN : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {v : Fin n × ℕ} {id : Fin t} {e : ASTExp} {P : Vec Predicate t} {L : Vec VariableSet t}
+  ASSIGN : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {v : TransVariable} {id : Fin t} {e : ASTExp} {P : Vec Predicate t} {L : Vec VariableSet t}
     → Γ ⊦ e - τ
     → variableNotInFreeSets v Γ (lookup L id) 
     → Γ , pc ⊦ ASSIGN v id e , P , L

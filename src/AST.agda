@@ -4,11 +4,10 @@ open import Agda.Builtin.Nat
 open import Data.Bool.Base
 open import Data.Fin
 open import Data.Nat
-open import Data.Product
 
 open import VariableSet {n}
 
--- | AST for expressions and statements.
+-- AST for expressions and statements.
 
 -- Expressions for language with brackets.
 data ASTExpS : Set where
@@ -28,7 +27,7 @@ data ASTStmS : Set where
 -- Expressions for language without brackets.
 data ASTExp : Set where
    INTVAL : ℕ → ASTExp 
-   VAR    : Fin n × ℕ → ASTExp
+   VAR    : TransVariable → ASTExp
    ADD    : ASTExp → ASTExp → ASTExp 
 
 -- Equality test for expressions.
@@ -47,7 +46,7 @@ expressionVariables (ADD expression1 expression2) =
 
 -- Statements without brackets.
 data ASTStm : Set where
-   ASSIGN : Fin n × ℕ → ASTExp → ASTStm
+   ASSIGN : TransVariable → ASTExp → ASTStm
    IF0    : ASTExp → ASTStm → ASTStm → ASTStm 
    WHILE  : ASTExp → ASTStm → ASTStm 
    SEQ    : ASTStm → ASTStm → ASTStm 
@@ -56,7 +55,7 @@ data ASTStm : Set where
 -- Statements without brackets and with assignment identifiers.
 -- A program is parameterized by the total number of assignment statements it has.
 data ASTStmId {t : ℕ} : Set where
-   ASSIGN : Fin n × ℕ → Fin t → ASTExp → ASTStmId {t}
+   ASSIGN : TransVariable → Fin t → ASTExp → ASTStmId {t}
    IF0    : ASTExp → ASTStmId {t} → ASTStmId {t} → ASTStmId {t}
    WHILE  : ASTExp → ASTStmId {t} → ASTStmId {t}
    SEQ    : ASTStmId {t} → ASTStmId {t} → ASTStmId {t}

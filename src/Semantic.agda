@@ -20,6 +20,7 @@ open import Relation.Binary.PropositionalEquality
 
 open import AST {n}
 open import Transformation {n}
+open import VariableSet {n}
 
 
 -- BRACKETED LANGUAGE SEMANTICS
@@ -90,7 +91,7 @@ safeListUpdate (x ∷ xs) (suc n) v = x ∷ (safeListUpdate xs n v)
 
 -- Update the value of a variable in memory of the transformed program.
 infixl 6 _[_↦_]ₜ
-_[_↦_]ₜ : Memoryₜ → Fin n × ℕ → ℕ → Memoryₜ
+_[_↦_]ₜ : Memoryₜ → TransVariable → ℕ → Memoryₜ
 m [ (name , index) ↦ v ]ₜ = 
   m [ name ]≔ (safeListUpdate (lookup m name) index v)
 
@@ -109,7 +110,7 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
     → ⟨ s₁ , m ⟩⇓ₜ m'  
     → ⟨ s₂ , m' ⟩⇓ₜ m'' 
     → ⟨ SEQ s₁ s₂ , m ⟩⇓ₜ m'' 
-  Assignₜ : {m : Memoryₜ} {x : Fin n × ℕ} {e : ASTExp} 
+  Assignₜ : {m : Memoryₜ} {x : TransVariable} {e : ASTExp} 
     → ⟨ ASSIGN x e , m ⟩⇓ₜ m [ x  ↦ ⟦ e ⟧ₜ m ]ₜ
   IfTₜ : {m m' : Memoryₜ} {e : ASTExp} {v : ℕ} {s₁ s₂ : ASTStm}
     → ⟦ e ⟧ₜ m ≡ v
