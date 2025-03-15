@@ -401,11 +401,9 @@ correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {mₜ'} {a}
                                   (cong (λ y → lookupOrDefault y (lookup mₜ' varName)) (sym (lookupy∘changex x varName a vN!=x)))  
                                 )
 
--- TODO(minor): I tried to replace some of the values in the long expression of IfTₜ but apparently if I use a dot I need
--- to use the full expression, and if I don't use it I cannot have functions as part of the pattern. Is there a nicer way of writing that expression?
 correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfT {.m} {.m'} {.cond} {v} {.sT} {.sF} em=v v<>0 d) 
-  (IfTₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {v'} {.(SEQ (proj₁ (transStm sT a)) (merge𝒜 (proj₂ (transStm sT a)) (proj₂ (transStm sF a)) :=𝒜 proj₂ (transStm sT a)))} {sF'} em'=v' v'<>0 (Seqₜ {m1} {m2} {m3} d' d''))
+  (IfTₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {v'} {sT'} {sF'} em'=v' v'<>0 (Seqₜ {m1} {m2} {m3} d' d''))
   meq = 
     let aT = proj₂ (transStm sT a)
         aF = proj₂ (transStm sF a)
@@ -430,7 +428,7 @@ correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
 
 correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
   (IfF {.m} {.m'} {.cond} {.sT} {.sF} em=0 d) 
-  (IfFₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {sT'} {.(SEQ (proj₁ (transStm sF a)) (merge𝒜 (proj₂ (transStm sT a)) (proj₂ (transStm sF a)) :=𝒜 proj₂ (transStm sF a)))} em'=0 (Seqₜ {m1} {m2} {m3} d' d''))
+  (IfFₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {sT'} {sF'} em'=0 (Seqₜ {m1} {m2} {m3} d' d''))
   meq = 
     let aT = proj₂ (transStm sT a)
         aF = proj₂ (transStm sF a)
