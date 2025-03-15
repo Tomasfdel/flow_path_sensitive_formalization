@@ -130,8 +130,8 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
     → ⟨ WHILE e s , m ⟩⇓ₜ m
 
 
--- CORRECTNESS PROOF PRELIMINARIES
-
+-- CORRECTNESS PROOF PRELIMINARY DEFINITIONS
+-- Lookup of a variable in a transformed memory.
 lookupₜ : Memoryₜ  → 𝒜 → Fin n → ℕ
 lookupₜ mₜ active x = lookupOrDefault (lookup active x) (lookup mₜ x)
 
@@ -150,6 +150,8 @@ m1ₜ - a1 ==ₘₜ m2ₜ - a2 = ∀ x → lookupₜ m1ₜ a1 x ≡ lookupₜ m2
   → m ==ₘ mₜ' - a'
 ==ₘ-trans meq meq2 var = trans (meq var) (meq2 var)   
 
+
+-- LEMMA 3 OF THE CORRECTNESS PROOF
 -- Semantic equality of expression and its transformed counterpart.
 expEquality : {e : ASTExpS} {m : Memory} {mₜ : Memoryₜ} {v v' : ℕ} {active : 𝒜}
   → m ==ₘ mₜ - active
@@ -163,15 +165,14 @@ expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ₑ m)} {.(⟦ transExp (
       expEq2 = expEquality {e2} {m} {mₜ} {⟦ e2 ⟧ₑ m} {⟦ transExp e2 a ⟧ₜ mₜ} {a} m=mt refl refl
    in cong₂ _+_ expEq1 expEq2
 
--- TODO(minor): I should clean up these properties and probably move them to another file. 
--- Γ[x↦st] x = st
+
+-- MEMORY LOOKUP PROPERTIES
 lookupx∘changex : 
   {A : Set} {m : ℕ} {v : A} (index : Fin m) (vector : Vec A m) 
   → lookup (vector [ index ]≔ v) index ≡ v
 lookupx∘changex zero (head ∷ tail) = refl
 lookupx∘changex (suc x) (head ∷ tail) = lookupx∘changex x tail 
 
--- x ≠ y ⇒ Γ[x↦st] y = Γ y
 lookupy∘changex : 
   {A : Set} {m : ℕ} {v : A} (i1 i2 : Fin m) (vector : Vec A m)
   → i2 ≢  i1
@@ -205,6 +206,10 @@ lookupₜy∘changeₜx zero (suc x) (head ∷ tail) i2!=i1 = refl
 lookupₜy∘changeₜx (suc x) zero (head ∷ tail) i2!=i1 = refl
 lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘changeₜx x y tail (i2!=i1 ∘ cong suc)  
 
+
+-- LEMMA 4 OF THE CORRECTNESS PROOF
+-- Equality of lookups of a variable in two memories after the active set assignment
+-- for that variable has been executed. 
 𝒜memEqPostVar : {currVar n' : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {n=sn' : n ≡ suc n'} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
   → ⟨ assignActiveSetAux currVar cV<n a a' n=sn' , mₜ ⟩⇓ₜ mₜ'
   → currVar <ₙ toℕ varName
@@ -241,6 +246,8 @@ lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘ch
       lmt1vN=lmt'vN = 𝒜memEqPostVar d (<-pred (m<n⇒m<1+n cV<vN))
    in trans lmtvN=lmt1vN lmt1vN=lmt'vN  
 
+-- Equality of lookups of a variable in two memories before the active set assignment
+-- for that variable has been executed. 
 𝒜memEqPreVar : {currVar n' : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {n=sn' : n ≡ suc n'} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
   → ⟨ assignActiveSetAux currVar cV<n a a' n=sn' , mₜ ⟩⇓ₜ mₜ'
   → toℕ varName ≤ₙ currVar
@@ -292,7 +299,6 @@ lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘ch
 
 
 -- CORRECTNESS PROOF
-
 -- Correctness of the program transformation for the While case.
 whileCorrectness : {e : ASTExpS} {s : ASTStmS} {e' : ASTExp} {s' : ASTStm} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {A A₁ A₂ : 𝒜}
   → ⟨ While e s , m ⟩⇓ m'
