@@ -8,6 +8,7 @@ open import Data.Product
   hiding (zip) 
 open import Data.Vec.Base
 
+open import ActiveSet {n}
 open import AST {n}
 open import SecurityLabels {n}
 open import Transformation {n}

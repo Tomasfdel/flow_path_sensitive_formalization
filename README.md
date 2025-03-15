@@ -10,6 +10,7 @@ This formalization has been tested using
 The Agda modules are organized according to the following structure:
 
 * Base 
+    * ActiveSet
     * AssignmentId
     * AST
     * Liveness
@@ -25,6 +26,8 @@ The Agda modules are organized according to the following structure:
 **Base**
 
 * **AST.agda**: Definition of the syntax trees for both the bracketed and non-bracketed versions of the source language. _(Section 3)_
+
+* **ActiveSet.agda**: Definition of active sets and operations for them. _(Section 4.2)_
 
 * **Transformation.agda**: Transformation between bracketed and non-bracketed programs. _(Section 4.2)_
 

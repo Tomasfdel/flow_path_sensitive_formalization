@@ -18,6 +18,7 @@ open import Function
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality 
 
+open import ActiveSet {n}
 open import AST {n}
 open import Transformation {n}
 open import VariableSet {n}
