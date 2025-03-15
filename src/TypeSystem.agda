@@ -2,6 +2,7 @@ module TypeSystem {n} where
 
 open import Data.Bool.Base
 open import Data.Bool.Properties
+  hiding (≤-reflexive)
 open import Data.Fin
   hiding (_≟_)
 open import Data.List
@@ -123,7 +124,7 @@ typeStatementAux Γ pc SKIP P L = just (SKIP {_} {Γ} {pc} {P} {L} , [])
 -- Checks if the given program can be typed under the type system after applying the transformation.
 -- In case it can, a proof with the typing rules applied is returned.
 typeStatement : (stm : ASTStmS) 
-  → Maybe ((Label Low) , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate n zero)))))) , (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate n zero)))))) True (replicate (suc (assignCount (proj₁ (transStm stm (replicate n zero))))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (n≤1+n (assignCount (proj₁ (transStm stm (replicate n zero)))))) (Label Low) (proj₂ (transStm stm (replicate n zero))) (fromActiveSetᵥₛ (proj₂ (transStm stm (replicate n zero)))) (replicate (suc (assignCount (proj₁ (transStm stm (replicate n zero))))) emptyᵥₛ))) × List ProofObligation)
+  → Maybe ((Label Low) , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (≤-reflexive refl)) , (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (≤-reflexive refl)) True (replicate (assignCount (proj₁ (transStm stm (replicate n zero)))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transStm stm (replicate n zero))) zero (≤-reflexive refl)) (Label Low) (proj₂ (transStm stm (replicate n zero))) (fromActiveSetᵥₛ (proj₂ (transStm stm (replicate n zero)))) (replicate (assignCount (proj₁ (transStm stm (replicate n zero)))) emptyᵥₛ))) × List ProofObligation)
 typeStatement stm = 
   let stmTrans , active = transStm stm (replicate n zero)
       stmId = identifyAssignments stmTrans

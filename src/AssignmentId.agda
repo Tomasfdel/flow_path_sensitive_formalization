@@ -60,5 +60,5 @@ identifyStatementSequence {t} {s} s1 s2 id aCS=aCS1+aCS2 id+aCS≤t =
     in s1Id , s2Id 
 
 -- Returns the given program with each assignment having a unique (integer) identifier.
-identifyAssignments : (s : ASTStm) → ASTStmId {1 + assignCount s}
-identifyAssignments ast = identifyAssignmentsAux ast zero (n≤1+n (assignCount ast))
+identifyAssignments : (s : ASTStm) → ASTStmId {assignCount s}
+identifyAssignments ast = identifyAssignmentsAux ast zero (≤-reflexive refl)
