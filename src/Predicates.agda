@@ -52,7 +52,7 @@ intersectPredicates pred1 pred2 =
 -- intermediate steps of the execution doing a shallow branch analysis on IF and WHILE statements.
 -- Additionally, when the function finds an assignment statement, it stores the predicate that was true before its execution
 -- in the n-th index of a vector, where n is the index number of the assignment. 
-populatePredicateVector : {t : ℕ} → ASTStmId {t} → Predicate → Vec Predicate t → Predicate × (Vec Predicate t)
+populatePredicateVector : {t : ℕ} → ASTStmId t → Predicate → Vec Predicate t → Predicate × (Vec Predicate t)
 populatePredicateVector (ASSIGN variableName assignId _) predicate predicateVector = 
     let newPredicate = removePredicatesWithVariable predicate variableName
         newPredicateVector = predicateVector [ assignId ]≔ predicate
@@ -74,6 +74,6 @@ populatePredicateVector SKIP predicate predicateVector =
 -- Given a program statement, returns a vector of predicates so that the element in its n-th
 -- position is a predicate that is always true before the execution of the n-th assignment 
 -- of the program. 
-generatePredicates : {t : ℕ} → ASTStmId {t} → Vec Predicate t
+generatePredicates : {t : ℕ} → ASTStmId t → Vec Predicate t
 generatePredicates {t} statement =
     proj₂ (populatePredicateVector statement True (Data.Vec.Base.replicate t True))

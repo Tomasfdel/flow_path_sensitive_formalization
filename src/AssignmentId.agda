@@ -21,13 +21,13 @@ assignCount SKIP = 0
 -- both involve identifying all assignments in one statement and then in the other.
 identifyStatementSequence : {t : ℕ} {s : ASTStm} → (s1 : ASTStm) → (s2 : ASTStm) → (id : ℕ) → 
                             assignCount s ≡ assignCount s1 + assignCount s2 → id + assignCount s ≤ t → 
-                            (ASTStmId {t} × ASTStmId {t})
+                            (ASTStmId t × ASTStmId t)
 
 -- Auxiliary function to identifyAssignments. Given a statement s, an integer id and another integer t,
 -- which is the total number of assignments in the program being analysed, this function recursively
 -- traverses s assigning indices of type Fin t to each assignment statement it finds, starting from id
 -- and increasing it by 1 each time.  
-identifyAssignmentsAux : {t : ℕ} → (s : ASTStm) → (id : ℕ) → id + assignCount s ≤ t → ASTStmId {t}
+identifyAssignmentsAux : {t : ℕ} → (s : ASTStm) → (id : ℕ) → id + assignCount s ≤ t → ASTStmId t
 identifyAssignmentsAux {t} s@(ASSIGN x exp) id id+1≤t = 
    let 1+id≤t : assignCount s + id ≤ t
        1+id≤t = subst (λ x → x ≤ t) (+-comm id (assignCount s)) id+1≤t
@@ -60,5 +60,5 @@ identifyStatementSequence {t} {s} s1 s2 id aCS=aCS1+aCS2 id+aCS≤t =
     in s1Id , s2Id 
 
 -- Returns the given program with each assignment having a unique (integer) identifier.
-identifyAssignments : (s : ASTStm) → ASTStmId {assignCount s}
+identifyAssignments : (s : ASTStm) → ASTStmId (assignCount s)
 identifyAssignments ast = identifyAssignmentsAux ast zero (≤-reflexive refl)

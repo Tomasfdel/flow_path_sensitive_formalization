@@ -54,9 +54,9 @@ data ASTStm : Set where
 
 -- Statements without brackets and with assignment identifiers.
 -- A program is parameterized by the total number of assignment statements it has.
-data ASTStmId {t : ℕ} : Set where
-   ASSIGN : TransVariable → Fin t → ASTExp → ASTStmId {t}
-   IF0    : ASTExp → ASTStmId {t} → ASTStmId {t} → ASTStmId {t}
-   WHILE  : ASTExp → ASTStmId {t} → ASTStmId {t}
-   SEQ    : ASTStmId {t} → ASTStmId {t} → ASTStmId {t}
-   SKIP   : ASTStmId {t}
+data ASTStmId (t : ℕ) : Set where
+   ASSIGN : TransVariable → Fin t → ASTExp → ASTStmId t
+   IF0    : ASTExp → ASTStmId t → ASTStmId t → ASTStmId t
+   WHILE  : ASTExp → ASTStmId t → ASTStmId t
+   SEQ    : ASTStmId t → ASTStmId t → ASTStmId t
+   SKIP   : ASTStmId t

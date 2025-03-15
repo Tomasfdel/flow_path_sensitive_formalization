@@ -17,7 +17,7 @@ fromActiveSetᵥₛ : 𝒜 → VariableSet
 fromActiveSetᵥₛ activeSet = fromListᵥₛ (toList (zip (allFin (length activeSet)) activeSet))
 
 -- Statement KILL function from Figure 9 of the paper.
-statementKill : {t : ℕ} → ASTStmId {t} → VariableSet
+statementKill : {t : ℕ} → ASTStmId t → VariableSet
 statementKill (ASSIGN variableName _ _) = singletonᵥₛ variableName
 statementKill _ = emptyᵥₛ
 
@@ -31,7 +31,7 @@ expressionGen (ADD expression1 expression2) typeEnv =
     (expressionGen expression1 typeEnv) unionᵥₛ (expressionGen expression2 typeEnv)
 
 -- Uses an iterative method to calculate the liveIn set of a WHILE statement.
-livenessIteration : {t : ℕ} → ℕ → ASTExp → ASTStmId {t} → TypingEnvironment → 𝒜 → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
+livenessIteration : {t : ℕ} → ℕ → ASTExp → ASTStmId t → TypingEnvironment → 𝒜 → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
 
 -- This function takes a statement and calculates the liveIn set for it. For that, it takes a VariableSet
 -- which holds the liveIn of its successors, which would correspond to the liveOut of the statement.
@@ -39,7 +39,7 @@ livenessIteration : {t : ℕ} → ℕ → ASTExp → ASTStmId {t} → TypingEnvi
 -- should hold the liveOut of each of the m assignments in the original program. As a side effect of the
 -- liveIn calculation of an assignment, the function updates the corresponding index in the vector. That
 -- result will then be used in one of the rules of the typing system. 
-livenessAnalysisAux : {t : ℕ} → ASTStmId {t} → TypingEnvironment → 𝒜 → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
+livenessAnalysisAux : {t : ℕ} → ASTStmId t → TypingEnvironment → 𝒜 → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
 livenessAnalysisAux statement@(ASSIGN variableName assignId expression) typeEnv _ nextLiveIn assignLiveOuts = 
     let liveIn = (nextLiveIn diffᵥₛ (statementKill statement)) unionᵥₛ (expressionGen expression typeEnv)
         newAssignLiveOuts = assignLiveOuts [ assignId ]≔ nextLiveIn
@@ -77,6 +77,6 @@ livenessIteration (suc iterCount) condition body typeEnv activeSet nextLiveIn as
 
 -- Given a program statement, returns a vector of variable sets so that the element in its n-th
 -- position is the liveOut set of the n-th assignment of the program. 
-livenessAnalysis : {t : ℕ} → ASTStmId {t} → 𝒜 → TypingEnvironment → Vec VariableSet t
+livenessAnalysis : {t : ℕ} → ASTStmId t → 𝒜 → TypingEnvironment → Vec VariableSet t
 livenessAnalysis {t} statement activeSet typeEnv = 
     proj₂ (livenessAnalysisAux statement typeEnv activeSet (fromActiveSetᵥₛ activeSet) (replicate t emptyᵥₛ))

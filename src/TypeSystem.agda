@@ -55,14 +55,14 @@ variableNotInFreeSets varName Γ varSet =
 -- TODO(minor): I should look for a nicer way of building this type rather than the full list of commas at the end.
 -- TODO(minor): If I use a dependent sum, I can add the list of proof obligations again to this type, which I think makes the type definition more proper.
 -- Typing rules for statements.
-data _,_⊦_,_,_ : {t : ℕ} → TypingEnvironment → SecurityLabel → ASTStmId {t} → Vec Predicate t → Vec VariableSet t → Set where
+data _,_⊦_,_,_ : {t : ℕ} → TypingEnvironment → SecurityLabel → ASTStmId t → Vec Predicate t → Vec VariableSet t → Set where
   SKIP : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {P : Vec Predicate t} {L : Vec VariableSet t} 
     → Γ , pc ⊦ SKIP {t} , P , L
-  SEQ : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {s s' : ASTStmId {t}} {P : Vec Predicate t} {L : Vec VariableSet t}
+  SEQ : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {s s' : ASTStmId t} {P : Vec Predicate t} {L : Vec VariableSet t}
     → Γ , pc ⊦ s , P , L
     → Γ , pc ⊦ s' , P , L
     → Γ , pc ⊦ SEQ s s' , P , L
-  IF : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {cond : ASTExp} {sT sF : ASTStmId {t}} {P : Vec Predicate t} {L : Vec VariableSet t}
+  IF : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {cond : ASTExp} {sT sF : ASTStmId t} {P : Vec Predicate t} {L : Vec VariableSet t}
     → Γ ⊦ cond - τ
     → Γ , (Join τ pc) ⊦ sT , P , L
     → Γ , (Join τ pc) ⊦ sF , P , L
@@ -71,7 +71,7 @@ data _,_⊦_,_,_ : {t : ℕ} → TypingEnvironment → SecurityLabel → ASTStmI
     → Γ ⊦ e - τ
     → variableNotInFreeSets v Γ (lookup L id) 
     → Γ , pc ⊦ ASSIGN v id e , P , L
-  WHILE : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {cond : ASTExp} {s : ASTStmId {t}} {P : Vec Predicate t} {L : Vec VariableSet t}
+  WHILE : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {cond : ASTExp} {s : ASTStmId t} {P : Vec Predicate t} {L : Vec VariableSet t}
     → Γ ⊦ cond - τ
     → Γ , (Join τ pc) ⊦ s , P , L
     → Γ , pc ⊦ WHILE cond s , P , L
@@ -85,7 +85,7 @@ typeExpression Γ (ADD e e') =
       τ' , proof' = typeExpression Γ e'
    in Join τ τ' , OP proof proof'
 
-typeStatementAux : {t : ℕ} (Γ : TypingEnvironment) (pc : SecurityLabel) (stm : ASTStmId {t}) (P : Vec Predicate t) (L : Vec VariableSet t)
+typeStatementAux : {t : ℕ} (Γ : TypingEnvironment) (pc : SecurityLabel) (stm : ASTStmId t) (P : Vec Predicate t) (L : Vec VariableSet t)
   → Maybe ((Γ , pc ⊦ stm , P , L) × List ProofObligation)
 
 typeStatementAux Γ pc (ASSIGN varName assId exp) P L 
