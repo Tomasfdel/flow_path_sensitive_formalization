@@ -34,11 +34,10 @@ _[_↦_] : Memory → Fin n → ℕ → Memory
 m [ name ↦ v ] = m [ name ]≔ v
 
 -- Semantic evaluation of expressions.
--- TODO(minor): Add the rest of the arythmetic operations besides ADD to the ASTExp type.
-⟦_⟧ : ASTExpS → Memory → ℕ
-⟦ IntVal n ⟧ m = n
-⟦ Var name ⟧ m = lookup m name
-⟦ Add exp exp' ⟧ m = ⟦ exp ⟧ m + ⟦ exp' ⟧ m
+⟦_⟧ₑ : ASTExpS → Memory → ℕ
+⟦ IntVal n ⟧ₑ m = n
+⟦ Var name ⟧ₑ m = lookup m name
+⟦ Add exp exp' ⟧ₑ m = ⟦ exp ⟧ₑ m + ⟦ exp' ⟧ₑ m
   
 -- Big step semantics of statements.
 infixl 5 ⟨_,_⟩⇓_
@@ -49,27 +48,26 @@ data ⟨_,_⟩⇓_ : ASTStmS → Memory → Memory → Set where
     → ⟨ s₂ , m' ⟩⇓ m'' 
     → ⟨ Seq s₁ s₂ , m ⟩⇓ m'' 
   Assign : {m : Memory} {x : Fin n} {e : ASTExpS} 
-    → ⟨ x := e , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ m ]
-  -- TODO(minor): How do I set the precedence for this to work properly using '⟦x := e⟧' instead of '⟦_:=_ x e⟧'  
+    → ⟨ x := e , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ₑ m ]
   AssignBr : {m : Memory} {x : Fin n} {e : ASTExpS} 
-    → ⟨ ⟦_:=_⟧ x e , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ m ]
+    → ⟨ ⟦ x := e ⟧ , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ₑ m ]
   IfT : {m m' : Memory} {e : ASTExpS} {v : ℕ} {s₁ s₂ : ASTStmS}
-    → ⟦ e ⟧ m ≡ v
+    → ⟦ e ⟧ₑ m ≡ v
     → v ≢  0 
     → ⟨ s₁ , m ⟩⇓ m' 
     → ⟨ If0 e s₁ s₂ , m ⟩⇓ m'  
   IfF : {m m' : Memory} {e : ASTExpS} {s₁ s₂ : ASTStmS}
-    → ⟦ e ⟧ m ≡ 0 
+    → ⟦ e ⟧ₑ m ≡ 0 
     → ⟨ s₂ , m ⟩⇓ m' 
     → ⟨ If0 e s₁ s₂ , m ⟩⇓ m'  
   WhileT : {m m' m'' : Memory} {e : ASTExpS} {v : ℕ} {s : ASTStmS}
-    → ⟦ e ⟧ m ≡ v
+    → ⟦ e ⟧ₑ m ≡ v
     → v ≢  0 
     → ⟨ s , m ⟩⇓ m'  
     → ⟨ While e s , m' ⟩⇓ m'' 
     → ⟨ While e s , m ⟩⇓ m''
   WhileF : {m : Memory} {e : ASTExpS} {s : ASTStmS}
-    → ⟦ e ⟧ m ≡ 0 
+    → ⟦ e ⟧ₑ m ≡ 0 
     → ⟨ While e s , m ⟩⇓ m
 
 
@@ -96,7 +94,6 @@ m [ (name , index) ↦ v ]ₜ =
   m [ name ]≔ (safeListUpdate (lookup m name) index v)
 
 -- Semantic evaluation of tranformed expressions.
--- TODO(minor): Add the rest of the arythmetic operations besides ADD to the ASTExp type.
 ⟦_⟧ₜ : ASTExp → Memoryₜ → ℕ
 ⟦ INTVAL n ⟧ₜ m = n
 ⟦ VAR (name , index) ⟧ₜ m = lookupOrDefault index (lookup m name)       
@@ -155,14 +152,14 @@ m1ₜ - a1 ==ₘₜ m2ₜ - a2 = ∀ x → lookupₜ m1ₜ a1 x ≡ lookupₜ m2
 -- Semantic equality of expression and its transformed counterpart.
 expEquality : {e : ASTExpS} {m : Memory} {mₜ : Memoryₜ} {v v' : ℕ} {active : 𝒜}
   → m ==ₘ mₜ - active
-  → ⟦ e ⟧ m ≡ v 
+  → ⟦ e ⟧ₑ m ≡ v 
   → ⟦ transExp e active ⟧ₜ mₜ ≡ v' 
   → v ≡ v' 
-expEquality {IntVal n} {m} {mₜ} {.(⟦ IntVal n ⟧ m)} {.(⟦ transExp (IntVal n) a ⟧ₜ mₜ)} {a} _ refl refl = refl
-expEquality {Var x} {m} {mₜ} {.(⟦ Var x ⟧ m)} {.(⟦ transExp (Var x) a ⟧ₜ mₜ)} {a} m=mt refl refl = m=mt x
-expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ m)} {.(⟦ transExp (Add e1 e2) a ⟧ₜ mₜ)} {a} m=mt refl refl = 
-  let expEq1 = expEquality {e1} {m} {mₜ} {⟦ e1 ⟧ m} {⟦ transExp e1 a ⟧ₜ mₜ} {a} m=mt refl refl
-      expEq2 = expEquality {e2} {m} {mₜ} {⟦ e2 ⟧ m} {⟦ transExp e2 a ⟧ₜ mₜ} {a} m=mt refl refl
+expEquality {IntVal n} {m} {mₜ} {.(⟦ IntVal n ⟧ₑ m)} {.(⟦ transExp (IntVal n) a ⟧ₜ mₜ)} {a} _ refl refl = refl
+expEquality {Var x} {m} {mₜ} {.(⟦ Var x ⟧ₑ m)} {.(⟦ transExp (Var x) a ⟧ₜ mₜ)} {a} m=mt refl refl = m=mt x
+expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ₑ m)} {.(⟦ transExp (Add e1 e2) a ⟧ₜ mₜ)} {a} m=mt refl refl = 
+  let expEq1 = expEquality {e1} {m} {mₜ} {⟦ e1 ⟧ₑ m} {⟦ transExp e1 a ⟧ₜ mₜ} {a} m=mt refl refl
+      expEq2 = expEquality {e2} {m} {mₜ} {⟦ e2 ⟧ₑ m} {⟦ transExp e2 a ⟧ₜ mₜ} {a} m=mt refl refl
    in cong₂ _+_ expEq1 expEq2
 
 -- TODO(minor): I should clean up these properties and probably move them to another file. 
@@ -314,17 +311,17 @@ correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : �
   → m' ==ₘ mₜ' - (proj₂ (transStm s active))
 
 -- TODO(minor): Rewrite this using a let and type explanations for the difficult terms like I did in AssignmentId.
-correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
+correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ₑ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   Assign
   Assignₜ 
   meq varName with varName ≟f x
 ...              | yes vN=x = trans 
-                                -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v'
+                                -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === v'
                                 (trans 
-                                  -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v
+                                  -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === v
                                   (trans 
-                                  -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === lookup (m [ varName ]≔ ⟦ e ⟧ m) varName
-                                    (sym (cong (λ y → lookup (m [ y ]≔ ⟦ e ⟧ m) varName) vN=x))
+                                  -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === lookup (m [ varName ]≔ ⟦ e ⟧ₑ m) varName
+                                    (sym (cong (λ y → lookup (m [ y ]≔ ⟦ e ⟧ₑ m) varName) vN=x))
                                   -- lookup (m [ varName ]≔ v) varName ≡ v
                                     (lookupx∘changex varName m)
                                   )
@@ -348,17 +345,17 @@ correctness {x := e} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {.(mₜ [ x , looku
                                 (sym (lookupₜy∘changeₜx x varName mₜ vN!=x))
 
 -- TODO(minor): Same as above, rewrite this using a let and type explanations.
-correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ m ])} {mₜ} {mₜ'} {a} 
+correctness {⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ₑ m ])} {mₜ} {mₜ'} {a} 
   AssignBr 
   Assignₜ 
   meq varName with varName ≟f x
 ...              | yes vN=x = trans 
-                                -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v'
+                                -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === v'
                                 (trans 
-                                  -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === v
+                                  -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === v
                                   (trans 
-                                  -- lookup (m [ x ]≔ ⟦ e ⟧ m) varName === lookup (m [ varName ]≔ ⟦ e ⟧ m) varName
-                                    (sym (cong (λ y → lookup (m [ y ]≔ ⟦ e ⟧ m) varName) vN=x))
+                                  -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === lookup (m [ varName ]≔ ⟦ e ⟧ₑ m) varName
+                                    (sym (cong (λ y → lookup (m [ y ]≔ ⟦ e ⟧ₑ m) varName) vN=x))
                                   -- lookup (m [ varName ]≔ v) varName ≡ v
                                     (lookupx∘changex varName m)
                                   )
@@ -494,4 +491,4 @@ whileCorrectness {e} {s} {e'} {s'} {m} {m'} {mₜ} {mₜ'} {A} {A₁} {A₂}
         -- mt1 - A2 ==ₘₜ mt2 - A1
         mt1A2=mt2A1 = :=𝒜-memEq {A₂} {A₁} {mₜ1} {mₜ2} dₜ''
         -- m' ==ₘ mₜ' - A1
-     in whileCorrectness d' dₜ''' refl refl refl refl (==ₘ-trans {m1} {mₜ1} {mₜ2} {A₂} {A₁} h mt1A2=mt2A1)
+     in whileCorrectness d' dₜ''' refl refl refl refl (==ₘ-trans {m1} {mₜ1} {mₜ2} {A₂} {A₁} h mt1A2=mt2A1) 
