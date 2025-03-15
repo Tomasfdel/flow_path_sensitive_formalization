@@ -3,7 +3,7 @@ module Transformation {n} where
 open import Agda.Builtin.Nat
 open import Data.Bool.Base
 open import Data.Fin 
-  hiding (_≟_)
+  hiding (_≟_ ; _+_)
 open import Data.Nat 
   renaming (_<_ to _<ₙ_)
 open import Data.Nat.Properties
@@ -15,9 +15,14 @@ open import Relation.Binary.PropositionalEquality
 open import AST {n}
 
 -- Active Sets.
+-- TODO(minor): Extract activeSet functions to a separate module?
 -- Using a vector to represent a Fin n → ℕ .
 𝒜 : Set _
 𝒜 = Vec ℕ n
+
+𝒜varCount : {m : ℕ} → Vec ℕ m → ℕ
+𝒜varCount [] = 0
+𝒜varCount (h1 ∷ t1) = suc h1 + 𝒜varCount t1
 
 -- Active sets merge function from Figure 5 of the paper.
 merge𝒜 : {m : ℕ} → Vec ℕ m → Vec ℕ m → Vec ℕ m

@@ -1,6 +1,7 @@
 module VariableSet {n} where
 
 open import Agda.Builtin.Nat
+  renaming (_<_ to _<ₙ_)
 open import Data.Bool.Base
 open import Data.Nat
 open import Data.Fin
@@ -57,6 +58,9 @@ vs diffᵥₛ (x ∷ xs) = (popᵥₛ x vs) diffᵥₛ xs
 _subsetᵥₛ_ : VariableSet → VariableSet → Bool
 [] subsetᵥₛ _ = true
 (x ∷ xs) subsetᵥₛ ys = (x elemᵥₛ ys) ∧ (xs subsetᵥₛ ys)
+
+_strictSubsetᵥₛ_ : VariableSet → VariableSet → Bool
+x strictSubsetᵥₛ y = (sizeᵥₛ x <ₙ sizeᵥₛ y) ∧ (x subsetᵥₛ y)
 
 _==ᵥₛ_ : VariableSet → VariableSet → Bool
 x ==ᵥₛ y = (sizeᵥₛ x == sizeᵥₛ y) ∧ (x subsetᵥₛ y) 
