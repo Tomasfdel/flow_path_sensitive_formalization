@@ -210,14 +210,14 @@ lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘ch
 -- LEMMA 4 OF THE CORRECTNESS PROOF
 -- Equality of lookups of a variable in two memories after the active set assignment
 -- for that variable has been executed. 
-𝒜memEqPostVar : {currVar n' : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {n=sn' : n ≡ suc n'} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
-  → ⟨ assignActiveSetAux currVar cV<n a a' n=sn' , mₜ ⟩⇓ₜ mₜ'
+𝒜memEqPostVar : {currVar : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
+  → ⟨ assignActiveSetAux currVar cV<n a a' , mₜ ⟩⇓ₜ mₜ'
   → currVar <ₙ toℕ varName
   → lookup mₜ varName ≡ lookup mₜ' varName
 
-𝒜memEqPostVar {zero} {_} {varName} {z<n} {_} {a} {a'} {_} {_} _ _ with lookup a (fromℕ< z<n) ≟ₙ lookup a' (fromℕ< z<n)
-𝒜memEqPostVar {zero} {_} {varName} {_} {_} {a} {a'} {mₜ} {.mₜ} Skipₜ _        | yes _ = refl
-𝒜memEqPostVar {zero} {_} {varName} {z<n} {_} {a} {a'} {mₜ} {mₜ'} Assignₜ z<vN | no _ =
+𝒜memEqPostVar {zero} {varName} {z<n} {a} {a'} {_} {_} _ _ with lookup a (fromℕ< z<n) ≟ₙ lookup a' (fromℕ< z<n)
+𝒜memEqPostVar {zero} {varName} {_} {a} {a'} {mₜ} {.mₜ} Skipₜ _        | yes _ = refl
+𝒜memEqPostVar {zero} {varName} {z<n} {a} {a'} {mₜ} {mₜ'} Assignₜ z<vN | no _ =
   let -- toℕ (fromℕ< z<n) ≡ 0
       toNz=0 = toℕ-fromℕ< z<n
       -- toℕ (fromℕ< z<n) <ₙ toℕ varName
@@ -228,10 +228,10 @@ lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘ch
       vN<>z = ≢-sym (<⇒≢  z<vN)
    in sym (lookupy∘changex (fromℕ< z<n) varName mₜ vN<>z)
 
-𝒜memEqPostVar currVar@{suc currVar'} {_} {varName} {cV<n} {_} {a} {a'} {_} {_} _ _ with lookup a (fromℕ< cV<n) ≟ₙ lookup a' (fromℕ< cV<n)
-𝒜memEqPostVar currVar@{suc currVar'} {_} {varName} {_} {_} {a} {a'} {_} {_} (Seqₜ Skipₜ d) cV<vN        | yes _ = 
+𝒜memEqPostVar currVar@{suc currVar'} {varName} {cV<n} {a} {a'} {_} {_} _ _ with lookup a (fromℕ< cV<n) ≟ₙ lookup a' (fromℕ< cV<n)
+𝒜memEqPostVar currVar@{suc currVar'} {varName} {_} {a} {a'} {_} {_} (Seqₜ Skipₜ d) cV<vN    | yes _ = 
   𝒜memEqPostVar d (<-pred (m<n⇒m<1+n cV<vN))
-𝒜memEqPostVar currVar@{suc currVar'} {_} {varName} {cV<n} {_} {a} {a'} {mₜ} {mₜ'} (Seqₜ Assignₜ d) cV<vN | no _ = 
+𝒜memEqPostVar currVar@{suc currVar'} {varName} {cV<n} {a} {a'} {mₜ} {mₜ'} (Seqₜ Assignₜ d) cV<vN | no _ = 
   let -- toℕ (fromℕ< cV<n) ≡ currVar
       toNcV=cV = toℕ-fromℕ< cV<n
       -- toℕ (fromℕ< cV<n) <ₙ toℕ varName
@@ -248,25 +248,25 @@ lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘ch
 
 -- Equality of lookups of a variable in two memories before the active set assignment
 -- for that variable has been executed. 
-𝒜memEqPreVar : {currVar n' : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {n=sn' : n ≡ suc n'} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
-  → ⟨ assignActiveSetAux currVar cV<n a a' n=sn' , mₜ ⟩⇓ₜ mₜ'
+𝒜memEqPreVar : {currVar : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
+  → ⟨ assignActiveSetAux currVar cV<n a a' , mₜ ⟩⇓ₜ mₜ'
   → toℕ varName ≤ₙ currVar
   → lookupₜ mₜ a' varName ≡ lookupₜ mₜ' a varName
 
-𝒜memEqPreVar {zero} {_} {zero} {_} {_} {a} {a'} {_} {_} _ _ with lookup a zero ≟ₙ lookup a' zero
-𝒜memEqPreVar {zero} {_} {zero} {_} {_} {_} {_} {mₜ} {.mₜ} Skipₜ _   | yes laz=la'z = 
+𝒜memEqPreVar {zero} {zero} {_} {a} {a'} {_} {_} _ _ with lookup a zero ≟ₙ lookup a' zero
+𝒜memEqPreVar {zero} {zero} {_} {_} {_} {mₜ} {.mₜ} Skipₜ _   | yes laz=la'z = 
   cong (\x → lookupOrDefault x (lookup mₜ zero)) (sym laz=la'z)
-𝒜memEqPreVar {zero} {_} {zero} {_} {_} {a} {a'} {mₜ} {_} Assignₜ _ | no _ = 
+𝒜memEqPreVar {zero} {zero} {_} {a} {a'} {mₜ} {_} Assignₜ _ | no _ = 
   sym (lookupₜx∘changeₜx {n} {_} {lookup a zero} zero mₜ)
 
-𝒜memEqPreVar currVar@{suc currVar'} {_} {varName} {cV<n} {_} {a} {a'} {_} {_} _ _ with toℕ varName ≟ₙ currVar | lookup a (fromℕ< cV<n) ≟ₙ lookup a' (fromℕ< cV<n)
-𝒜memEqPreVar currVar@{suc currVar'} {_} {varName} {cV<n} {_} {a} {a'} {_} {_} (Seqₜ Skipₜ d) _                     | yes vN=cV | yes lacV=la'cV = 
+𝒜memEqPreVar currVar@{suc currVar'} {varName} {cV<n} {a} {a'} {_} {_} _ _ with toℕ varName ≟ₙ currVar | lookup a (fromℕ< cV<n) ≟ₙ lookup a' (fromℕ< cV<n)
+𝒜memEqPreVar currVar@{suc currVar'} {varName} {cV<n} {a} {a'} {_} {_} (Seqₜ Skipₜ d) _                     | yes vN=cV | yes lacV=la'cV = 
   let lmtvN=lmt'vN = 𝒜memEqPostVar d (subst (\x → currVar' <ₙ x) (sym vN=cV) (n<1+n currVar'))
       -- varName ≡ fromℕ< cV<n
       vN=cV = toℕ-injective (trans vN=cV (sym (toℕ-fromℕ< cV<n)))
       lavN=la'vN = subst (\x → lookup a x ≡ lookup a' x) (sym vN=cV) lacV=la'cV
    in cong₂ (\x y → lookupOrDefault x y) (sym lavN=la'vN) lmtvN=lmt'vN
-𝒜memEqPreVar currVar@{suc currVar'} {_} {varName} {cV<n} {_} {a} {a'} {mₜ} {mₜ'} (Seqₜ {.mₜ} {mₜ1} {.mₜ'} Assignₜ d) _ | yes vN=cV | no _ = 
+𝒜memEqPreVar currVar@{suc currVar'} {varName} {cV<n} {a} {a'} {mₜ} {mₜ'} (Seqₜ {.mₜ} {mₜ1} {.mₜ'} Assignₜ d) _ | yes vN=cV | no _ = 
   let finCurrVar = fromℕ< cV<n
       -- lookup mt1 varName = lookup mt' varName
       lmt1vN=lmt'vN = 𝒜memEqPostVar d (subst (\x → currVar' <ₙ x) (sym vN=cV) (n<1+n currVar'))
@@ -277,9 +277,9 @@ lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘ch
       -- lookupOrDefault (lookup a varName) (lookup mt1 varName) == lookupOrDefault (lookup a' varName) (lookup mt varName)
       lamt1vN=la'mtvN = subst (\x → lookupₜ mₜ a' x ≡ lookupₜ mₜ1 a x) cV=vN (sym lamt1cV=la'mtcV)
    in subst (\x → lookupₜ mₜ a' varName ≡ lookupOrDefault (lookup a varName) x) lmt1vN=lmt'vN lamt1vN=la'mtvN
-𝒜memEqPreVar currVar@{suc currVar'} {_} {varName} {_} {_} {a} {a'} {_} {_} (Seqₜ Skipₜ d) vN≤cV                     | no vN<>cV | yes _ = 
+𝒜memEqPreVar currVar@{suc currVar'} {varName} {_} {a} {a'} {_} {_} (Seqₜ Skipₜ d) vN≤cV                     | no vN<>cV | yes _ = 
   𝒜memEqPreVar d (m<1+n⇒m≤n (≤∧≢⇒< vN≤cV vN<>cV))
-𝒜memEqPreVar currVar@{suc currVar'} {_} {varName} {cV<n} {_} {a} {a'} {mₜ} {mₜ'} (Seqₜ Assignₜ d) vN≤cV               | no vN<>cV | no _ =
+𝒜memEqPreVar currVar@{suc currVar'} {varName} {cV<n} {a} {a'} {mₜ} {mₜ'} (Seqₜ Assignₜ d) vN≤cV               | no vN<>cV | no _ =
   let -- varName <> fromℕ< cV<n
       vN<>fromN<cV = (\vN=fromN<cV → vN<>cV (subst (\x → toℕ x ≡ currVar) (sym vN=fromN<cV) (toℕ-fromℕ< cV<n))) 
       -- lookupₜ mₜ1 a' varName ≡ lookupₜ mₜ a' varName

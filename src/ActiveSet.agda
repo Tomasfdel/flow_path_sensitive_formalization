@@ -34,13 +34,12 @@ activeSetVarAssignment hInd a a' with lookup a hInd ≟ lookup a' hInd
 ...                             | yes _ = SKIP
 ...                             | no _  = ASSIGN (hInd , (lookup a hInd)) (VAR (hInd , (lookup a' hInd)))
 
-assignActiveSetAux : {n' : ℕ} (m : ℕ) → m <ₙ n → 𝒜 → 𝒜 → n ≡ (suc n') → ASTStm
-assignActiveSetAux zero z<n a a' n=sn' = activeSetVarAssignment (fromℕ< z<n) a a'
-assignActiveSetAux (suc m) sm<n a a' n=sn' = 
-   let m<sn' = m<n⇒m<1+n (<-pred (subst (\x → suc m <ₙ x) n=sn' sm<n))
-       m<n = (subst (\x → m <ₙ x) (sym n=sn') m<sn')
-    in SEQ (activeSetVarAssignment (fromℕ< sm<n) a a') 
-           (assignActiveSetAux m m<n a a' n=sn')
+assignActiveSetAux : (m : ℕ) → m <ₙ n → 𝒜 → 𝒜 → ASTStm
+assignActiveSetAux zero z<n a a' = activeSetVarAssignment (fromℕ< z<n) a a'
+assignActiveSetAux m@(suc m') m<n a a' = 
+  let m'<n = <-pred (m<n⇒m<1+n m<n)
+   in SEQ (activeSetVarAssignment (fromℕ< m<n) a a') 
+          (assignActiveSetAux m' m'<n a a')
 
 0<n=>n=sn' : {m : ℕ} → zero <ₙ m → Σ[ m' ∈ ℕ ] (m ≡ suc m')
 0<n=>n=sn' (s≤s {zero} {n'} z≤n) = n' , refl
@@ -49,5 +48,5 @@ assignActiveSetAux (suc m) sm<n a a' n=sn' =
 _:=𝒜_ : 𝒜 → 𝒜 → ASTStm
 a :=𝒜 a' with n ≟ zero 
 ...    | no n<>0 = let n' , n=sn' = 0<n=>n=sn' (n≢0⇒n>0 n<>0)
-                    in assignActiveSetAux {n'} n' (subst (\x → n' <ₙ x) (sym n=sn') (n<1+n n')) a a' n=sn'
+                    in assignActiveSetAux n' (subst (\x → n' <ₙ x) (sym n=sn') (n<1+n n')) a a'
 ...    | yes _ = SKIP
