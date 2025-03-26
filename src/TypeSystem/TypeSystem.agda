@@ -1,4 +1,4 @@
-module TypeSystem {n} where
+module TypeSystem.TypeSystem {n} where
 
 open import Data.Bool.Base
 open import Data.Bool.Properties
@@ -21,13 +21,13 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
   hiding (True)
 
-open import AssignmentId {n}
-open import AST {n}
-open import Liveness {n}
-open import Predicates {n}
-open import SecurityLabels {n}
-open import Transformation {n}
-open import VariableSet {n}
+open import Transformation.AST {n}
+open import Transformation.Transformation {n}
+open import Transformation.VariableSet {n}
+open import TypeSystem.AssignmentId {n}
+open import TypeSystem.Liveness {n}
+open import TypeSystem.Predicates {n}
+open import TypeSystem.SecurityLabels {n}
 
 -- Proof obligations created by the type system's assignment rules.
 record ProofObligation : Set where
@@ -121,6 +121,8 @@ typeStatementAux Γ pc SKIP P L = just ([] , SKIP {_} {Γ} {pc} {P} {L})
 -- Maybe I can use dependent sums so that the values themselves are returned and the definition is much smaller.
 -- Checks if the given program can be typed under the type system after applying the transformation.
 -- In case it can, a proof with the typing rules applied is returned.
+-- Maybe (∃[ proofs, P , L , s , a , b ] P , L ⊦ s [ a , b ] - proofs
+-- Either that or I could return a record type.
 typeStatement : (stm : ASTStmS) 
   → Maybe (∃[ proofs ] ((Label Low) , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) [ (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) True (replicate (assignCount (proj₁ (transformProgram stm))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) (Label Low) (proj₂ (transformProgram stm)) (fromActiveSetᵥₛ (proj₂ (transformProgram stm))) (replicate (assignCount (proj₁ (transformProgram stm))) emptyᵥₛ))) ]- proofs))
 typeStatement stm = 

@@ -9,21 +9,23 @@ This formalization has been tested using
 ## Code Structure
 The Agda modules are organized according to the following structure:
 
-* Base 
-    * ActiveSet
-    * AssignmentId
-    * AST
-    * Liveness
-    * Predicates
-    * SecurityLabels
-    * Semantic
+* src
     * Transformation
+        * ActiveSet
+        * AST
+        * Semantic
+        * Transformation
+        * VariableSet
     * TypeSystem
-    * VariableSet
+        * AssignmentId
+        * Liveness
+        * Predicates
+        * SecurityLabels
+        * TypeSystem
 
 ## Module Content
 
-**Base**
+**Transformation**
 
 * **AST.agda**: Definition of the syntax trees for both the bracketed and non-bracketed versions of the source language. _(Section 3)_
 
@@ -32,6 +34,10 @@ The Agda modules are organized according to the following structure:
 * **Transformation.agda**: Transformation between bracketed and non-bracketed programs. _(Section 4.2)_
 
 * **Semantic.agda**: Proof of correctness of the transformation. _(Section 4.3)_
+
+* **VariableSet.agda**: Utility module defining finite sets of program variables.
+
+**TypeSystem**
 
 * **SecurityLabels.agda**: Definition of the type system's security labels. _(Section 5.3)_
 
@@ -42,5 +48,3 @@ The Agda modules are organized according to the following structure:
 * **Predicates.agda**: Generation of program state predicates that are true for each assignment statement, also used in the typing rules. _(Section 5.4)_
 
 * **TypeSystem.agda**: Definition of the type system for transformed programs. _(Section 5.5)_
-
-* **VariableSet.agda**: Utility module defining finite sets of program variables.

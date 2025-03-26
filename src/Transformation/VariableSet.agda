@@ -1,4 +1,4 @@
-module VariableSet {n} where
+module Transformation.VariableSet {n} where
 
 open import Agda.Builtin.Nat
   renaming (_<_ to _<ₙ_)

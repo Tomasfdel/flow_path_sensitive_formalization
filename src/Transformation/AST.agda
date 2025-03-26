@@ -1,11 +1,11 @@
-module AST {n} where
+module Transformation.AST {n} where
 
 open import Agda.Builtin.Nat 
 open import Data.Bool.Base
 open import Data.Fin
 open import Data.Nat
 
-open import VariableSet {n}
+open import Transformation.VariableSet {n}
 
 -- AST for expressions and statements.
 

@@ -1,4 +1,4 @@
-module AssignmentId {n} where
+module TypeSystem.AssignmentId {n} where
 
 open import Data.Fin
   hiding (_≤_ ; _+_ ; _<_)
@@ -7,7 +7,7 @@ open import Data.Nat.Properties
 open import Data.Product
 open import Relation.Binary.PropositionalEquality 
 
-open import AST {n}
+open import Transformation.AST {n}
 
 -- Counts the number of assignments in a program statement.
 assignCount : ASTStm → ℕ

@@ -1,12 +1,11 @@
-module Transformation {n} where
+module Transformation.Transformation {n} where
 
 open import Data.Nat 
 open import Data.Product 
 open import Data.Vec.Base
 
-
-open import ActiveSet {n}
-open import AST {n}
+open import Transformation.ActiveSet {n}
+open import Transformation.AST {n}
 
 -- Expressions transformation.
 transExp : ASTExpS → 𝒜 → ASTExp

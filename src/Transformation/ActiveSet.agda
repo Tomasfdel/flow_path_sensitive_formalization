@@ -1,4 +1,4 @@
-module ActiveSet {n} where
+module Transformation.ActiveSet {n} where
 
 open import Agda.Builtin.Nat
 open import Data.Bool.Base
@@ -12,7 +12,7 @@ open import Data.Vec.Base
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality 
 
-open import AST {n}
+open import Transformation.AST {n}
 
 -- Active Sets.
 -- Using a vector to represent a Fin n → ℕ mapping.

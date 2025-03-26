@@ -1,4 +1,4 @@
-module Liveness {n} where
+module TypeSystem.Liveness {n} where
 
 open import Data.Bool.Base
 open import Data.List.Base
@@ -8,11 +8,11 @@ open import Data.Product
   hiding (zip) 
 open import Data.Vec.Base
 
-open import ActiveSet {n}
-open import AST {n}
-open import SecurityLabels {n}
-open import Transformation {n}
-open import VariableSet {n}
+open import Transformation.ActiveSet {n}
+open import Transformation.AST {n}
+open import Transformation.Transformation {n}
+open import Transformation.VariableSet {n}
+open import TypeSystem.SecurityLabels {n}
 
 fromActiveSetᵥₛ : 𝒜 → VariableSet
 fromActiveSetᵥₛ activeSet = fromListᵥₛ (toList (zip (allFin (length activeSet)) activeSet))

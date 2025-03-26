@@ -1,7 +1,7 @@
-module SecurityLabels {n} where
+module TypeSystem.SecurityLabels {n} where
 
-open import AST {n}
-open import VariableSet {n}
+open import Transformation.AST {n}
+open import Transformation.VariableSet {n}
 
 -- TODO(minor): Maybe implement this as a lattice later.
 data SecurityLevel : Set where

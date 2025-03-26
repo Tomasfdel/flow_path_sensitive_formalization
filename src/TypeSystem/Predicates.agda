@@ -1,4 +1,4 @@
-module Predicates {n} where
+module TypeSystem.Predicates {n} where
 
 open import Data.Bool.Base
 open import Data.List.Base
@@ -6,8 +6,8 @@ open import Data.Nat
 open import Data.Product
 open import Data.Vec.Base 
 
-open import AST {n}
-open import VariableSet {n}
+open import Transformation.AST {n}
+open import Transformation.VariableSet {n}
 
 data Predicate : Set where
     True : Predicate

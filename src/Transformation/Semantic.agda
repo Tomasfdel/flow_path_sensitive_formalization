@@ -1,4 +1,4 @@
-module Semantic {n} where
+module Transformation.Semantic {n} where
 
 open import Data.Empty
 open import Data.Fin
@@ -19,10 +19,10 @@ open import Function
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality 
 
-open import ActiveSet {n}
-open import AST {n}
-open import Transformation {n}
-open import VariableSet {n}
+open import Transformation.ActiveSet {n}
+open import Transformation.AST {n}
+open import Transformation.Transformation {n}
+open import Transformation.VariableSet {n}
 
 
 -- BRACKETED LANGUAGE SEMANTICS
@@ -78,7 +78,6 @@ data ⟨_,_⟩⇓_ : ASTStmS → Memory → Memory → Set where
 Memoryₜ : Set _
 Memoryₜ = Vec (List ℕ) n
 
--- TODO(minor): Dirty list lookup and update implementations, there's probably a cleaner way of doing this.
 lookupOrDefault : ℕ → List ℕ → ℕ
 lookupOrDefault _ [] = 0
 lookupOrDefault 0 (x ∷ xs) = x
@@ -400,8 +399,8 @@ correctness : {s : ASTStmS} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {active : �
 -- TODO(minor): Rewrite this using a let and type explanations for the difficult terms like I did in AssignmentId.
 correctness s@{x := e} {m} {.(m [ x ↦ ⟦ e ⟧ₑ m ])} {mₜ} {.(mₜ [ x , lookup a x ↦ ⟦ transExp e a ⟧ₜ mₜ ]ₜ)} {a} 
   Assign
-  Assignₜ 
-(AssignWF wFmₜa)
+  Assignₜ
+  (AssignWF wFmₜa)
   meq varName with varName ≟f x
 ...              | yes vN=x = trans 
                                 -- lookup (m [ x ]≔ ⟦ e ⟧ₑ m) varName === v'
@@ -532,7 +531,7 @@ correctness {While cond s} {m} {m'} {mₜ} {mₜ'} {active} d
   (Seqₜ {.mₜ} {mₜ1} {.mₜ'} dₜ dₜ') 
   wF@(WhileWF wFmₜa₁ _)
   meq = 
-  let A₁ = merge𝒜 active (proj₂ (transStm s active))
+    let A₁ = merge𝒜 active (proj₂ (transStm s active))
         mtA=mt1A1 = :=𝒜-memEq {active} {A₁} {mₜ} {mₜ1} dₜ wFmₜa₁
      in whileCorrectness d dₜ' refl refl refl refl (wellFormedStmTransitive wF dₜ) (==ₘ-trans {m} {mₜ} {mₜ1} {active} {A₁} meq mtA=mt1A1)
 
