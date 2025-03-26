@@ -10,10 +10,15 @@ This formalization has been tested using
 The Agda modules are organized according to the following structure:
 
 * src
+    * Semantic
+        * Correctness
+        * CorrectnessLemmas
+        * Memory
+        * Semantic
+        * WellFormed
     * Transformation
         * ActiveSet
         * AST
-        * Semantic
         * Transformation
         * VariableSet
     * TypeSystem
@@ -33,9 +38,19 @@ The Agda modules are organized according to the following structure:
 
 * **Transformation.agda**: Transformation between bracketed and non-bracketed programs. _(Section 4.2)_
 
-* **Semantic.agda**: Proof of correctness of the transformation. _(Section 4.3)_
-
 * **VariableSet.agda**: Utility module defining finite sets of program variables.
+
+**Semantic**
+
+* **Memory.agda**: Definition of memory for bracketed and non-bracketed programs. _(Section 4.3)_
+
+* **Semantic.agda**: Big step semantics for both languages.
+
+* **WellFormed.agda**: Well-formedness definition and properties for memories relative to active sets.
+
+* **CorrectnessLemmas.agda**: Formalization of Lemmas 3 and 4 of the transformation correctness proof. _(Appendix A)_ 
+
+* **Correctness.agda**: Formalization of the proof of correctness of the transformation. _(Appendix A)_
 
 **TypeSystem**
 
