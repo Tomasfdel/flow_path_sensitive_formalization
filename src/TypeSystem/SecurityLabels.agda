@@ -1,5 +1,11 @@
 module TypeSystem.SecurityLabels {n} where
 
+open import Data.List.Base
+  hiding (lookup)
+open import Data.Nat
+open import Data.Product
+open import Data.Vec.Base
+
 open import Transformation.AST {n}
 open import Transformation.VariableSet {n}
 
@@ -21,11 +27,13 @@ labelVariables (ExpTest exp l1 l2) =
 labelVariables (Meet l1 l2) = (labelVariables l1) unionᵥₛ (labelVariables l2)
 labelVariables (Join l1 l2) = (labelVariables l1) unionᵥₛ (labelVariables l2)
 
--- TODO(minor): This is not correct, for now I'm leaving it as is because I need a definition
--- but ideally this would be something like a Map from TransVariable to SecurityLabel.
 TypingEnvironment : Set _
-TypingEnvironment = SecurityLabel 
+TypingEnvironment = Vec (List SecurityLabel) n 
 
--- TODO(minor): Same as above
+lookupType : List SecurityLabel → ℕ → SecurityLabel
+lookupType [] _ = Label Low
+lookupType (x ∷ xs) zero = x
+lookupType (x ∷ xs) (suc n) = lookupType xs n
+
 findType : TypingEnvironment → TransVariable → SecurityLabel
-findType Γ _ = Γ
+findType Γ (v , index) = lookupType (lookup Γ v) index

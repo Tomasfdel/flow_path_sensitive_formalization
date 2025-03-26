@@ -123,11 +123,11 @@ typeStatementAux Γ pc SKIP P L = just ([] , SKIP {_} {Γ} {pc} {P} {L})
 -- In case it can, a proof with the typing rules applied is returned.
 -- Maybe (∃[ proofs, P , L , s , a , b ] P , L ⊦ s [ a , b ] - proofs
 -- Either that or I could return a record type.
-typeStatement : (stm : ASTStmS) 
-  → Maybe (∃[ proofs ] ((Label Low) , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) [ (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) True (replicate (assignCount (proj₁ (transformProgram stm))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) (Label Low) (proj₂ (transformProgram stm)) (fromActiveSetᵥₛ (proj₂ (transformProgram stm))) (replicate (assignCount (proj₁ (transformProgram stm))) emptyᵥₛ))) ]- proofs))
-typeStatement stm = 
+typeStatement : (stm : ASTStmS) → (Γ : TypingEnvironment)
+  → Maybe (∃[ proofs ] (Γ , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) [ (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) True (replicate (assignCount (proj₁ (transformProgram stm))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) Γ (proj₂ (transformProgram stm)) (fromActiveSetᵥₛ (proj₂ (transformProgram stm))) (replicate (assignCount (proj₁ (transformProgram stm))) emptyᵥₛ))) ]- proofs))
+typeStatement stm Γ = 
   let stmTrans , active = transformProgram stm
       stmId = identifyAssignments stmTrans
       predicates = generatePredicates stmId
-      liveSets = livenessAnalysis stmId active (Label Low) 
-   in typeStatementAux (Label Low) (Label Low) stmId predicates liveSets
+      liveSets = livenessAnalysis stmId active Γ
+   in typeStatementAux Γ (Label Low) stmId predicates liveSets

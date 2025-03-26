@@ -22,14 +22,12 @@ statementKill : {t : ℕ} → ASTStmId t → VariableSet
 statementKill (ASSIGN variableName _ _) = singletonᵥₛ variableName
 statementKill _ = emptyᵥₛ
 
--- TODO(minor): I'll have to update the VAR case when I change the TypingEnvironment type definition.
--- Expression GEN function from Figure 9 of the paper.
 expressionGen : ASTExp → TypingEnvironment → VariableSet
 expressionGen (INTVAL _) _ = emptyᵥₛ
-expressionGen (VAR variableName) typeEnv = 
-    (singletonᵥₛ variableName) unionᵥₛ (labelVariables typeEnv)
-expressionGen (ADD expression1 expression2) typeEnv = 
-    (expressionGen expression1 typeEnv) unionᵥₛ (expressionGen expression2 typeEnv)
+expressionGen (VAR variableName) Γ = 
+    (singletonᵥₛ variableName) unionᵥₛ (labelVariables (findType Γ variableName))
+expressionGen (ADD expression1 expression2) Γ = 
+    (expressionGen expression1 Γ) unionᵥₛ (expressionGen expression2 Γ)
 
 -- Uses an iterative method to calculate the liveIn set of a WHILE statement.
 livenessIteration : {t : ℕ} → ℕ → ASTExp → ASTStmId t → TypingEnvironment → 𝒜 → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
@@ -41,19 +39,19 @@ livenessIteration : {t : ℕ} → ℕ → ASTExp → ASTStmId t → TypingEnviro
 -- liveIn calculation of an assignment, the function updates the corresponding index in the vector. That
 -- result will then be used in one of the rules of the typing system. 
 livenessAnalysisAux : {t : ℕ} → ASTStmId t → TypingEnvironment → 𝒜 → VariableSet → Vec VariableSet t → VariableSet × (Vec VariableSet t)
-livenessAnalysisAux statement@(ASSIGN variableName assignId expression) typeEnv _ nextLiveIn assignLiveOuts = 
-    let liveIn = (nextLiveIn diffᵥₛ (statementKill statement)) unionᵥₛ (expressionGen expression typeEnv)
+livenessAnalysisAux statement@(ASSIGN variableName assignId expression) Γ _ nextLiveIn assignLiveOuts = 
+    let liveIn = (nextLiveIn diffᵥₛ (statementKill statement)) unionᵥₛ (expressionGen expression Γ)
         newAssignLiveOuts = assignLiveOuts [ assignId ]≔ nextLiveIn
      in liveIn , newAssignLiveOuts
-livenessAnalysisAux (IF0 condition statementT statementF) typeEnv activeSet nextLiveIn assignLiveOuts = 
-    let liveInT , assignLiveOutsT = livenessAnalysisAux statementT typeEnv activeSet nextLiveIn assignLiveOuts
-        liveInF , assignLiveOutsF = livenessAnalysisAux statementF typeEnv activeSet nextLiveIn assignLiveOutsT
-     in (liveInT unionᵥₛ liveInF) unionᵥₛ (expressionGen condition typeEnv) , assignLiveOutsF
-livenessAnalysisAux (WHILE condition statement) typeEnv activeSet nextLiveIn assignLiveOuts = 
-    livenessIteration (𝒜varCount activeSet) condition statement typeEnv activeSet nextLiveIn assignLiveOuts
-livenessAnalysisAux (SEQ statement1 statement2) typeEnv activeSet nextLiveIn assignLiveOuts = 
-    let nextLiveIn2 , assignLiveOuts2 = livenessAnalysisAux statement2 typeEnv activeSet nextLiveIn assignLiveOuts
-     in livenessAnalysisAux statement1 typeEnv activeSet nextLiveIn2 assignLiveOuts2
+livenessAnalysisAux (IF0 condition statementT statementF) Γ activeSet nextLiveIn assignLiveOuts = 
+    let liveInT , assignLiveOutsT = livenessAnalysisAux statementT Γ activeSet nextLiveIn assignLiveOuts
+        liveInF , assignLiveOutsF = livenessAnalysisAux statementF Γ activeSet nextLiveIn assignLiveOutsT
+     in (liveInT unionᵥₛ liveInF) unionᵥₛ (expressionGen condition Γ) , assignLiveOutsF
+livenessAnalysisAux (WHILE condition statement) Γ activeSet nextLiveIn assignLiveOuts = 
+    livenessIteration (𝒜varCount activeSet) condition statement Γ activeSet nextLiveIn assignLiveOuts
+livenessAnalysisAux (SEQ statement1 statement2) Γ activeSet nextLiveIn assignLiveOuts = 
+    let nextLiveIn2 , assignLiveOuts2 = livenessAnalysisAux statement2 Γ activeSet nextLiveIn assignLiveOuts
+     in livenessAnalysisAux statement1 Γ activeSet nextLiveIn2 assignLiveOuts2
 livenessAnalysisAux SKIP _ _ nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
 
 -- Uses an iterative method to calculate the liveIn set of a WHILE statement.
@@ -68,16 +66,16 @@ livenessAnalysisAux SKIP _ _ nextLiveIn assignLiveOuts = nextLiveIn , assignLive
 -- the resulting set size. 
 -- TODO(minor): See if I can find a cleaner to prove that this function terminates.
 livenessIteration zero _ _ _ _ nextLiveIn assignLiveOuts = nextLiveIn , assignLiveOuts
-livenessIteration (suc iterCount) condition body typeEnv activeSet nextLiveIn assignLiveOuts = 
-    let potentialLiveIn = (expressionGen condition typeEnv) unionᵥₛ nextLiveIn
-        bodyLiveIn , assignLiveOuts2 = livenessAnalysisAux body typeEnv activeSet potentialLiveIn assignLiveOuts
+livenessIteration (suc iterCount) condition body Γ activeSet nextLiveIn assignLiveOuts = 
+    let potentialLiveIn = (expressionGen condition Γ) unionᵥₛ nextLiveIn
+        bodyLiveIn , assignLiveOuts2 = livenessAnalysisAux body Γ activeSet potentialLiveIn assignLiveOuts
         finalLiveIn = bodyLiveIn unionᵥₛ potentialLiveIn
      in if potentialLiveIn strictSubsetᵥₛ finalLiveIn 
-            then livenessIteration iterCount condition body typeEnv activeSet finalLiveIn assignLiveOuts2
+            then livenessIteration iterCount condition body Γ activeSet finalLiveIn assignLiveOuts2
             else finalLiveIn , assignLiveOuts2
 
 -- Given a program statement, returns a vector of variable sets so that the element in its n-th
 -- position is the liveOut set of the n-th assignment of the program. 
 livenessAnalysis : {t : ℕ} → ASTStmId t → 𝒜 → TypingEnvironment → Vec VariableSet t
-livenessAnalysis {t} statement activeSet typeEnv = 
-    proj₂ (livenessAnalysisAux statement typeEnv activeSet (fromActiveSetᵥₛ activeSet) (replicate t emptyᵥₛ))
+livenessAnalysis {t} statement activeSet Γ = 
+    proj₂ (livenessAnalysisAux statement Γ activeSet (fromActiveSetᵥₛ activeSet) (replicate t emptyᵥₛ))
