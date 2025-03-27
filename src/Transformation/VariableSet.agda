@@ -1,7 +1,7 @@
 module Transformation.VariableSet {n} where
 
 open import Agda.Builtin.Nat
-  renaming (_<_ to _<ₙ_)
+  renaming (_<_ to _<ₙ_ ; _==_ to _==ₙ_)
 open import Data.Bool.Base
 open import Data.Nat
 open import Data.Fin
@@ -9,24 +9,27 @@ open import Data.List.Base
 open import Data.Product
 open import Function.Base
 
+-- A variable in a transformed program consists of a variable name (represented by a Fin n)
+-- and a natural number subindex indicating its version in the active set in a certain program point.
 TransVariable : Set _
 TransVariable = Fin n × ℕ
 
+-- We represent sets of variables with lists without repeated elements.
 VariableSet : Set _
 VariableSet = List TransVariable
 
--- Variable equality.
+-- Variable equality test.
 _==ᵥ_ : TransVariable → TransVariable → Bool
-(f1 , n1) ==ᵥ (f2 , n2) = (toℕ f1 == toℕ f2) ∧ (n1 == n2)
+(v₁ , i₁) ==ᵥ (v₂ , i₂) = (toℕ v₁ ==ₙ toℕ v₂) ∧ (i₁ ==ₙ i₂)
 
 -- Element check.
 _elemᵥₛ_ : TransVariable → VariableSet → Bool
 _ elemᵥₛ [] = false
-v1 elemᵥₛ (v2 ∷ vs) = (v1 ==ᵥ v2) ∨ (v1 elemᵥₛ vs) 
+v₁ elemᵥₛ (v₂ ∷ vs) = (v₁ ==ᵥ v₂) ∨ (v₁ elemᵥₛ vs) 
 
 -- Conversion from and to lists.
 fromListᵥₛ : List TransVariable → VariableSet
-fromListᵥₛ = foldr (\elem vs → if elem elemᵥₛ vs then vs else elem ∷ vs) [] 
+fromListᵥₛ = foldr (λ v vs → if v elemᵥₛ vs then vs else v ∷ vs) [] 
 
 toListᵥₛ : VariableSet → List TransVariable
 toListᵥₛ = id
@@ -35,33 +38,34 @@ toListᵥₛ = id
 emptyᵥₛ : VariableSet
 emptyᵥₛ = fromListᵥₛ []
 
--- Basic set constructors.
+-- Set size.
 sizeᵥₛ : VariableSet → ℕ
 sizeᵥₛ = length 
 
+-- Singleton set.
 singletonᵥₛ : TransVariable → VariableSet
-singletonᵥₛ x = fromListᵥₛ (x ∷ [])
+singletonᵥₛ v = fromListᵥₛ (v ∷ [])
 
 -- Element removal.
 popᵥₛ : TransVariable → VariableSet → VariableSet
 popᵥₛ _ [] = []
-popᵥₛ v1 (v2 ∷ vs) = if v1 ==ᵥ v2 then vs else v2 ∷ (popᵥₛ v1 vs)
+popᵥₛ v₁ (v₂ ∷ vs) = if v₁ ==ᵥ v₂ then vs else v₂ ∷ (popᵥₛ v₁ vs)
 
 -- Operations between sets.
 _unionᵥₛ_ : VariableSet → VariableSet → VariableSet
-vs1 unionᵥₛ vs2 = fromListᵥₛ (toListᵥₛ vs1 ++ toListᵥₛ vs2)
+vs₁ unionᵥₛ vs₂ = fromListᵥₛ (toListᵥₛ vs₁ ++ toListᵥₛ vs₂)
 
 _diffᵥₛ_ : VariableSet → VariableSet → VariableSet
 vs diffᵥₛ [] = vs
-vs diffᵥₛ (x ∷ xs) = (popᵥₛ x vs) diffᵥₛ xs
+vs₁ diffᵥₛ (v ∷ vs₂) = (popᵥₛ v vs₁) diffᵥₛ vs₂
 
 -- Set comparisons.
 _subsetᵥₛ_ : VariableSet → VariableSet → Bool
 [] subsetᵥₛ _ = true
-(x ∷ xs) subsetᵥₛ ys = (x elemᵥₛ ys) ∧ (xs subsetᵥₛ ys)
+(v ∷ vs₁) subsetᵥₛ vs₂ = (v elemᵥₛ vs₂) ∧ (vs₁ subsetᵥₛ vs₂)
 
 _strictSubsetᵥₛ_ : VariableSet → VariableSet → Bool
-x strictSubsetᵥₛ y = (sizeᵥₛ x <ₙ sizeᵥₛ y) ∧ (x subsetᵥₛ y)
+vs₁ strictSubsetᵥₛ vs₂ = (sizeᵥₛ vs₁ <ₙ sizeᵥₛ vs₂) ∧ (vs₁ subsetᵥₛ vs₂)
 
 _==ᵥₛ_ : VariableSet → VariableSet → Bool
-x ==ᵥₛ y = (sizeᵥₛ x == sizeᵥₛ y) ∧ (x subsetᵥₛ y) 
+vs₁ ==ᵥₛ vs₂ = (sizeᵥₛ vs₁ ==ₙ sizeᵥₛ vs₂) ∧ (vs₁ subsetᵥₛ vs₂) 
