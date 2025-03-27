@@ -30,8 +30,8 @@ m [ name ↦ v ] = m [ name ]≔ v
 -- Semantic evaluation of expressions.
 ⟦_⟧ₑ : ASTExpS → Memory → ℕ
 ⟦ IntVal n ⟧ₑ m = n
-⟦ Var name ⟧ₑ m = lookup m name
-⟦ Add exp exp' ⟧ₑ m = ⟦ exp ⟧ₑ m + ⟦ exp' ⟧ₑ m
+⟦ Var v ⟧ₑ m = lookup m v
+⟦ Add exp₁ exp₂ ⟧ₑ m = ⟦ exp₁ ⟧ₑ m + ⟦ exp₂ ⟧ₑ m
 
 -- State of the memory at a certain program point for the transformed program.
 Memoryₜ : Set _
@@ -50,70 +50,70 @@ safeListUpdate (x ∷ xs) (suc n) v = x ∷ (safeListUpdate xs n v)
 -- Update the value of a variable in memory of the transformed program.
 infixl 6 _[_↦_]ₜ
 _[_↦_]ₜ : Memoryₜ → TransVariable → ℕ → Memoryₜ
-m [ (name , index) ↦ v ]ₜ = 
-  m [ name ]≔ (safeListUpdate (lookup m name) index v)
+m [ var , index ↦ v ]ₜ = 
+  m [ var ]≔ (safeListUpdate (lookup m var) index v)
 
 -- Semantic evaluation of tranformed expressions.
 ⟦_⟧ₜ : ASTExp → Memoryₜ → ℕ
 ⟦ INTVAL n ⟧ₜ m = n
-⟦ VAR (name , index) ⟧ₜ m = lookupOrDefault index (lookup m name)       
-⟦ ADD exp exp' ⟧ₜ m = ⟦ exp ⟧ₜ m + ⟦ exp' ⟧ₜ m
+⟦ VAR (var , index) ⟧ₜ m = lookupOrDefault index (lookup m var)       
+⟦ ADD exp₁ exp₂ ⟧ₜ m = ⟦ exp₁ ⟧ₜ m + ⟦ exp₂ ⟧ₜ m
 
 -- Lookup of a variable in a transformed memory.
 lookupₜ : Memoryₜ  → 𝒜 → Fin n → ℕ
-lookupₜ mₜ active x = lookupOrDefault (lookup active x) (lookup mₜ x)
+lookupₜ mₜ A x = lookupOrDefault (lookup A x) (lookup mₜ x)
 
--- Equality between a memory and the projection of a transformed memory on an active set.
+-- Equality between a memory and the projection of a transformed memory on an active set (Definition 2).
 _==ₘ_-_ : Memory → Memoryₜ → 𝒜 → Set
-m ==ₘ mₜ - active = ∀ x → lookup m x ≡ lookupₜ mₜ active x
+m ==ₘ mₜ - A = ∀ x → lookup m x ≡ lookupₜ mₜ A x
 
 -- Equality between two memory projections on active sets.
 _-_==ₘₜ_-_ : Memoryₜ → 𝒜 → Memoryₜ → 𝒜 → Set
-m1ₜ - a1 ==ₘₜ m2ₜ - a2 = ∀ x → lookupₜ m1ₜ a1 x ≡ lookupₜ m2ₜ a2 x
+mₜ - A ==ₘₜ mₜ' - A' = ∀ x → lookupₜ mₜ A x ≡ lookupₜ mₜ' A' x
 
--- Transitive property between ==ₘ and ==ₘₜ .
-==ₘ-trans : {m : Memory} {mₜ mₜ' : Memoryₜ} {a a' : 𝒜}
-  → m ==ₘ mₜ - a
-  → mₜ - a ==ₘₜ mₜ' - a'
-  → m ==ₘ mₜ' - a'
-==ₘ-trans meq meq2 var = trans (meq var) (meq2 var)   
+-- Transitive property between ==ₘ and ==ₘₜ.
+==ₘ-trans : {m : Memory} {mₜ mₜ' : Memoryₜ} {A A' : 𝒜}
+  → m ==ₘ mₜ - A
+  → mₜ - A ==ₘₜ mₜ' - A'
+  → m ==ₘ mₜ' - A'
+==ₘ-trans meq meq' var = trans (meq var) (meq' var)   
 
 -- MEMORY LOOKUP PROPERTIES
 lookupx∘changex : 
-  {A : Set} {m : ℕ} {v : A} (index : Fin m) (vector : Vec A m) 
+  {X : Set} {m : ℕ} {v : X} (index : Fin m) (vector : Vec X m) 
   → lookup (vector [ index ]≔ v) index ≡ v
 lookupx∘changex zero (head ∷ tail) = refl
-lookupx∘changex (suc x) (head ∷ tail) = lookupx∘changex x tail 
+lookupx∘changex (suc m) (head ∷ tail) = lookupx∘changex m tail 
 
 lookupy∘changex : 
-  {A : Set} {m : ℕ} {v : A} (i1 i2 : Fin m) (vector : Vec A m)
-  → i2 ≢  i1
-  → lookup (vector [ i1 ]≔ v) i2 ≡ lookup vector i2
-lookupy∘changex zero zero vector i2!=i1 = ⊥-elim (i2!=i1 refl)
-lookupy∘changex zero (suc x) (head ∷ tail) i2!=i1 = refl
-lookupy∘changex (suc x) zero (head ∷ tail) i2!=i1 = refl
-lookupy∘changex (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupy∘changex x y tail (i2!=i1 ∘ cong suc)  
+  {X : Set} {m : ℕ} {v : X} (i₁ i₂ : Fin m) (vector : Vec X m)
+  → i₂ ≢  i₁
+  → lookup (vector [ i₁ ]≔ v) i₂ ≡ lookup vector i₂
+lookupy∘changex zero zero _ i₂<>i₁ = ⊥-elim (i₂<>i₁ refl)
+lookupy∘changex zero (suc _) (_ ∷ _) _ = refl
+lookupy∘changex (suc _) zero (_ ∷ _) _ = refl
+lookupy∘changex (suc i₁') (suc i₂') (_ ∷ tail) i₂<>i₁ = lookupy∘changex i₁' i₂' tail (i₂<>i₁ ∘ cong suc)  
 
 listLookupx∘listUpdatex : 
   {v : ℕ} (index : ℕ) (list : List ℕ) 
   → index <ₙ length list
   → lookupOrDefault index (safeListUpdate list index v) ≡ v
-listLookupx∘listUpdatex index [] i<0 = ⊥-elim (n≮0 i<0)
-listLookupx∘listUpdatex 0 (head ∷ tail) _ = refl
-listLookupx∘listUpdatex (suc index) (head ∷ tail) si<ll = listLookupx∘listUpdatex index tail (<-pred si<ll)
+listLookupx∘listUpdatex _ [] i<0 = ⊥-elim (n≮0 i<0)
+listLookupx∘listUpdatex 0 (_ ∷ _) _ = refl
+listLookupx∘listUpdatex (suc index) (_ ∷ tail) si<ll = listLookupx∘listUpdatex index tail (<-pred si<ll)
 
 lookupₜx∘changeₜx : 
-  {m v activeVar : ℕ} (index : Fin m) (vector : Vec (List ℕ) m) 
-  → activeVar <ₙ length (lookup vector index)
-  → lookupOrDefault activeVar (lookup (vector [ index ]≔ (safeListUpdate (lookup vector index) activeVar v)) index) ≡ v
-lookupₜx∘changeₜx {_} {_} {activeVar} zero (head ∷ tail) aV<lh = listLookupx∘listUpdatex activeVar head aV<lh
-lookupₜx∘changeₜx (suc x) (head ∷ tail) aV<liv = lookupₜx∘changeₜx x tail aV<liv
+  {m v var : ℕ} (index : Fin m) (vector : Vec (List ℕ) m) 
+  → var <ₙ length (lookup vector index)
+  → lookupOrDefault var (lookup (vector [ index ]≔ (safeListUpdate (lookup vector index) var v)) index) ≡ v
+lookupₜx∘changeₜx {var = var} zero (head ∷ _) v<lh = listLookupx∘listUpdatex var head v<lh
+lookupₜx∘changeₜx (suc index) (_ ∷ tail) v<lvi = lookupₜx∘changeₜx index tail v<lvi
 
 lookupₜy∘changeₜx : 
-  {m v activeVar activeVar2 : ℕ} (i1 i2 : Fin m) (vector : Vec (List ℕ) m) 
-  → i2 ≢  i1
-  → lookupOrDefault activeVar (lookup (vector [ i1 ]≔ (safeListUpdate (lookup vector i1) activeVar2 v)) i2) ≡ lookupOrDefault activeVar (lookup vector i2)
-lookupₜy∘changeₜx zero zero vector i2!=i1 = ⊥-elim (i2!=i1 refl)
-lookupₜy∘changeₜx zero (suc x) (head ∷ tail) i2!=i1 = refl
-lookupₜy∘changeₜx (suc x) zero (head ∷ tail) i2!=i1 = refl
-lookupₜy∘changeₜx (suc x) (suc y) (head ∷ tail) i2!=i1 = lookupₜy∘changeₜx x y tail (i2!=i1 ∘ cong suc)  
+  {m v var₁ var₂ : ℕ} (i₁ i₂ : Fin m) (vector : Vec (List ℕ) m) 
+  → i₂ ≢  i₁
+  → lookupOrDefault var₁ (lookup (vector [ i₁ ]≔ (safeListUpdate (lookup vector i₁) var₂ v)) i₂) ≡ lookupOrDefault var₁ (lookup vector i₂)
+lookupₜy∘changeₜx zero zero _ i₂<>i₁ = ⊥-elim (i₂<>i₁ refl)
+lookupₜy∘changeₜx zero (suc _) (_ ∷ _) _ = refl
+lookupₜy∘changeₜx (suc _) zero (_ ∷ _) _ = refl
+lookupₜy∘changeₜx (suc i₁') (suc i₂') (_ ∷ tail) i₂<>i₁ = lookupₜy∘changeₜx i₁' i₂' tail (i₂<>i₁ ∘ cong suc)  
