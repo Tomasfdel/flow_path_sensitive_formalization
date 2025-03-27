@@ -38,7 +38,7 @@ expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ₑ m)} {.(⟦ transExp (
 -- Equality of lookups of a variable in two memories after the active set assignment
 -- for that variable has been executed. 
 𝒜memEqPostVar : {currVar : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
-  → ⟨ assignActiveSetAux currVar cV<n a a' , mₜ ⟩⇓ₜ mₜ'
+  → ⟨ 𝒜assignAux currVar cV<n a a' , mₜ ⟩⇓ₜ mₜ'
   → currVar <ₙ toℕ varName
   → lookup mₜ varName ≡ lookup mₜ' varName
 
@@ -76,7 +76,7 @@ expEquality {Add e1 e2} {m} {mₜ} {.(⟦ Add e1 e2 ⟧ₑ m)} {.(⟦ transExp (
 -- Equality of lookups of a variable in two memories before the active set assignment
 -- for that variable has been executed. 
 𝒜memEqPreVar : {currVar : ℕ} {varName : Fin n} {cV<n : currVar <ₙ n} {a a' : 𝒜} {mₜ mₜ' : Memoryₜ}
-  → ⟨ assignActiveSetAux currVar cV<n a a' , mₜ ⟩⇓ₜ mₜ'
+  → ⟨ 𝒜assignAux currVar cV<n a a' , mₜ ⟩⇓ₜ mₜ'
   → toℕ varName ≤ₙ currVar
   → wellFormed mₜ a
   → lookupₜ mₜ a' varName ≡ lookupₜ mₜ' a varName

@@ -19,34 +19,37 @@ open import Transformation.AST {n}
 𝒜 : Set _
 𝒜 = Vec ℕ n
 
+-- Nunmber of variables used in an active set.
 𝒜varCount : {m : ℕ} → Vec ℕ m → ℕ
 𝒜varCount [] = 0
-𝒜varCount (h1 ∷ t1) = suc h1 + 𝒜varCount t1
+𝒜varCount (h ∷ tl) = suc h + 𝒜varCount tl
 
--- Active sets merge function from Figure 5 of the paper.
+-- Active sets merge function from Figure 5.
 merge𝒜 : {m : ℕ} → Vec ℕ m → Vec ℕ m → Vec ℕ m
 merge𝒜 [] [] = []
-merge𝒜 (h1 ∷ t1) (h2 ∷ t2) =
-   (if h1 == h2 then h1 else (suc (h1 ⊔ h2))) ∷ (merge𝒜 t1 t2)
+merge𝒜 (h₁ ∷ tl₁) (h₂ ∷ tl₂) =
+   (if h₁ == h₂ then h₁ else (suc (h₁ ⊔ h₂))) ∷ (merge𝒜 tl₁ tl₂)
 
-activeSetVarAssignment : Fin n → 𝒜 → 𝒜 → ASTStm
-activeSetVarAssignment hInd a a' with lookup a hInd ≟ lookup a' hInd 
+-- Auxiliary property needed in the definition of active sets assignment.
+0<n=>n'+1=n : {m : ℕ} → zero <ₙ m → Σ[ m' ∈ ℕ ] (suc m' ≡ m)
+0<n=>n'+1=n (s≤s {zero} {n'} z≤n) = n' , refl
+
+𝒜varAssignment : Fin n → 𝒜 → 𝒜 → ASTStm
+𝒜varAssignment var A A' with lookup A var ≟ lookup A' var 
 ...                             | yes _ = SKIP
-...                             | no _  = ASSIGN (hInd , (lookup a hInd)) (VAR (hInd , (lookup a' hInd)))
+...                             | no _  = ASSIGN (var , (lookup A var)) (VAR (var , (lookup A' var)))
 
-assignActiveSetAux : (m : ℕ) → m <ₙ n → 𝒜 → 𝒜 → ASTStm
-assignActiveSetAux zero z<n a a' = activeSetVarAssignment (fromℕ< z<n) a a'
-assignActiveSetAux m@(suc m') m<n a a' = 
+𝒜assignAux : (m : ℕ) → m <ₙ n → 𝒜 → 𝒜 → ASTStm
+𝒜assignAux zero z<n A A' = 𝒜varAssignment (fromℕ< z<n) A A'
+𝒜assignAux (suc m') m<n A A' = 
   let m'<n = <-pred (m<n⇒m<1+n m<n)
-   in SEQ (activeSetVarAssignment (fromℕ< m<n) a a') 
-          (assignActiveSetAux m' m'<n a a')
+   in SEQ (𝒜varAssignment (fromℕ< m<n) A A') 
+          (𝒜assignAux m' m'<n A A')
 
-0<n=>n=sn' : {m : ℕ} → zero <ₙ m → Σ[ m' ∈ ℕ ] (m ≡ suc m')
-0<n=>n=sn' (s≤s {zero} {n'} z≤n) = n' , refl
-
--- := definition for active sets from Figure 4 of the paper.
+-- Definition of active sets assignment from Figure 4.
 _:=𝒜_ : 𝒜 → 𝒜 → ASTStm
-a :=𝒜 a' with n ≟ zero 
-...    | no n<>0 = let n' , n=sn' = 0<n=>n=sn' (n≢0⇒n>0 n<>0)
-                    in assignActiveSetAux n' (subst (\x → n' <ₙ x) (sym n=sn') (n<1+n n')) a a'
+A :=𝒜 A' with n ≟ zero 
+...    | no n<>0 = let n' , n'+1=n = 0<n=>n'+1=n (n≢0⇒n>0 n<>0)
+                       n'<n = subst (λ x → n' <ₙ x) n'+1=n (n<1+n n')
+                    in 𝒜assignAux n' n'<n A A'
 ...    | yes _ = SKIP

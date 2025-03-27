@@ -13,8 +13,7 @@ transExp (IntVal n) _ = INTVAL n
 transExp (Var v) active = VAR (v , lookup active v)
 transExp (Add e1 e2) active = ADD (transExp e1 active) (transExp e2 active)
 
--- Program transformation from bracketed to non-bracketed statements,
--- following rules from figure 4 of the paper.
+-- Program transformation from bracketed to non-bracketed statements, following the rules from Figure 4.
 transStm : ASTStmS → 𝒜 → ASTStm × 𝒜
 transStm Skip active = (SKIP , active)
 transStm (v := e) active = (ASSIGN (v , lookup active v) (transExp e active) , active)
