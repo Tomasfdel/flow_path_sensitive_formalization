@@ -15,12 +15,12 @@ data ASTExpS : Set where
    
 -- Statements with brackets.
 data ASTStmS : Set where
-   ⟦_:=_⟧ : Fin n → ASTExpS → ASTStmS
+   Skip   : ASTStmS
    _:=_   : Fin n → ASTExpS → ASTStmS
+   ⟦_:=_⟧ : Fin n → ASTExpS → ASTStmS
+   Seq    : ASTStmS → ASTStmS → ASTStmS
    If    : ASTExpS → ASTStmS → ASTStmS → ASTStmS 
-   While  : ASTExpS → ASTStmS → ASTStmS 
-   Seq    : ASTStmS → ASTStmS → ASTStmS 
-   Skip   : ASTStmS 
+   While  : ASTExpS → ASTStmS → ASTStmS   
 
 -- Expressions for language without brackets.
 data ASTExp : Set where
@@ -44,17 +44,18 @@ expressionVariables (ADD exp₁ exp₂) =
 
 -- Statements without brackets.
 data ASTStm : Set where
+   SKIP   : ASTStm 
    ASSIGN : TransVariable → ASTExp → ASTStm
+   SEQ    : ASTStm → ASTStm → ASTStm 
    IF     : ASTExp → ASTStm → ASTStm → ASTStm 
    WHILE  : ASTExp → ASTStm → ASTStm 
-   SEQ    : ASTStm → ASTStm → ASTStm 
-   SKIP   : ASTStm 
-
+   
 -- Statements without brackets and with assignment identifiers.
 -- A program is parameterized by the total number of assignment statements it has.
 data ASTStmId (t : ℕ) : Set where
+   SKIP   : ASTStmId t
    ASSIGN : TransVariable → Fin t → ASTExp → ASTStmId t
+   SEQ    : ASTStmId t → ASTStmId t → ASTStmId t
    IF     : ASTExp → ASTStmId t → ASTStmId t → ASTStmId t
    WHILE  : ASTExp → ASTStmId t → ASTStmId t
-   SEQ    : ASTStmId t → ASTStmId t → ASTStmId t
-   SKIP   : ASTStmId t
+   
