@@ -117,17 +117,31 @@ typeStatementAux Γ pc (SEQ stm stm') P L =
 
 typeStatementAux Γ pc SKIP P L = just ([] , SKIP {_} {Γ} {pc} {P} {L})
 
--- TODO(minor): The type definition is horribly long, how can I make it nicer?.
--- Maybe I can use dependent sums so that the values themselves are returned and the definition is much smaller.
--- Checks if the given program can be typed under the type system after applying the transformation.
--- In case it can, a proof with the typing rules applied is returned.
--- Maybe (∃[ proofs, P , L , s , a , b ] P , L ⊦ s [ a , b ] - proofs
--- Either that or I could return a record type.
-typeStatement : (stm : ASTStmS) → (Γ : TypingEnvironment)
-  → Maybe (∃[ proofs ] (Γ , (Label Low) ⊦ (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) [ (proj₂ (populatePredicateVector (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) True (replicate (assignCount (proj₁ (transformProgram stm))) True))) , (proj₂ (livenessAnalysisAux (identifyAssignmentsAux (proj₁ (transformProgram stm)) zero (≤-reflexive refl)) Γ (proj₂ (transformProgram stm)) (fromActiveSetᵥₛ (proj₂ (transformProgram stm))) (replicate (assignCount (proj₁ (transformProgram stm))) emptyᵥₛ))) ]- proofs))
+record TypingProof : Set where
+  field
+    typeEnv : TypingEnvironment
+    pc : SecurityLabel
+    t : ℕ
+    stmId : ASTStmId t
+    predicates : Vec Predicate t
+    liveSets : Vec VariableSet t
+    proofObligations : List ProofObligation
+    proof : typeEnv , pc ⊦ stmId [ predicates , liveSets ]- proofObligations
+
+typeStatement : ASTStmS → TypingEnvironment → Maybe TypingProof
 typeStatement stm Γ = 
   let stmTrans , active = transformProgram stm
       stmId = identifyAssignments stmTrans
       predicates = generatePredicates stmId
       liveSets = livenessAnalysis stmId active Γ
-   in typeStatementAux Γ (Label Low) stmId predicates liveSets
+   in case typeStatementAux Γ (Label Low) stmId predicates liveSets of λ where
+        nothing → nothing
+        (just (proofs , stmType)) → just record { typeEnv = Γ; 
+                                                  pc = Label Low; 
+                                                  stmId = stmId; 
+                                                  predicates = predicates; 
+                                                  liveSets = liveSets; 
+                                                  proofObligations = proofs; 
+                                                  proof = stmType
+                                                }
+
