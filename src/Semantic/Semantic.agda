@@ -12,58 +12,58 @@ open import Semantic.Memory {n}
 infixl 5 ⟨_,_⟩⇓_
 data ⟨_,_⟩⇓_ : ASTStmS → Memory → Memory → Set where
   Skip : {m : Memory} → ⟨ Skip , m ⟩⇓ m
-  Seq : {m m' m'' : Memory}{s₁ s₂ : ASTStmS}
+  Assign : {m : Memory} {v : Fin n} {e : ASTExpS} 
+    → ⟨ v := e , m ⟩⇓ m [ v  ↦ ⟦ e ⟧ₑ m ]
+  AssignBr : {m : Memory} {v : Fin n} {e : ASTExpS} 
+    → ⟨ ⟦ v := e ⟧ , m ⟩⇓ m [ v  ↦ ⟦ e ⟧ₑ m ]
+  Seq : {m m' m'' : Memory} {s₁ s₂ : ASTStmS}
     → ⟨ s₁ , m ⟩⇓ m'  
     → ⟨ s₂ , m' ⟩⇓ m'' 
     → ⟨ Seq s₁ s₂ , m ⟩⇓ m'' 
-  Assign : {m : Memory} {x : Fin n} {e : ASTExpS} 
-    → ⟨ x := e , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ₑ m ]
-  AssignBr : {m : Memory} {x : Fin n} {e : ASTExpS} 
-    → ⟨ ⟦ x := e ⟧ , m ⟩⇓ m [ x  ↦ ⟦ e ⟧ₑ m ]
-  IfT : {m m' : Memory} {e : ASTExpS} {v : ℕ} {s₁ s₂ : ASTStmS}
-    → ⟦ e ⟧ₑ m ≡ v
+  IfT : {m m' : Memory} {cond : ASTExpS} {v : ℕ} {sT sF : ASTStmS}
+    → ⟦ cond ⟧ₑ m ≡ v
     → v ≢  0 
-    → ⟨ s₁ , m ⟩⇓ m' 
-    → ⟨ If e s₁ s₂ , m ⟩⇓ m'  
-  IfF : {m m' : Memory} {e : ASTExpS} {s₁ s₂ : ASTStmS}
-    → ⟦ e ⟧ₑ m ≡ 0 
-    → ⟨ s₂ , m ⟩⇓ m' 
-    → ⟨ If e s₁ s₂ , m ⟩⇓ m'  
-  WhileT : {m m' m'' : Memory} {e : ASTExpS} {v : ℕ} {s : ASTStmS}
-    → ⟦ e ⟧ₑ m ≡ v
+    → ⟨ sT , m ⟩⇓ m' 
+    → ⟨ If cond sT sF , m ⟩⇓ m'  
+  IfF : {m m' : Memory} {cond : ASTExpS} {sT sF : ASTStmS}
+    → ⟦ cond ⟧ₑ m ≡ 0 
+    → ⟨ sF , m ⟩⇓ m' 
+    → ⟨ If cond sT sF , m ⟩⇓ m'  
+  WhileT : {m m' m'' : Memory} {cond : ASTExpS} {v : ℕ} {s : ASTStmS}
+    → ⟦ cond ⟧ₑ m ≡ v
     → v ≢  0 
     → ⟨ s , m ⟩⇓ m'  
-    → ⟨ While e s , m' ⟩⇓ m'' 
-    → ⟨ While e s , m ⟩⇓ m''
-  WhileF : {m : Memory} {e : ASTExpS} {s : ASTStmS}
-    → ⟦ e ⟧ₑ m ≡ 0 
-    → ⟨ While e s , m ⟩⇓ m
+    → ⟨ While cond s , m' ⟩⇓ m'' 
+    → ⟨ While cond s , m ⟩⇓ m''
+  WhileF : {m : Memory} {cond : ASTExpS} {s : ASTStmS}
+    → ⟦ cond ⟧ₑ m ≡ 0 
+    → ⟨ While cond s , m ⟩⇓ m
 
 -- Big step semantics of transformed statements.
 infixl 5 ⟨_,_⟩⇓ₜ_
 data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
-  Skipₜ : {m : Memoryₜ} → ⟨ SKIP , m ⟩⇓ₜ m
-  Seqₜ : {m m' m'' : Memoryₜ} {s₁ s₂ : ASTStm}
-    → ⟨ s₁ , m ⟩⇓ₜ m'  
-    → ⟨ s₂ , m' ⟩⇓ₜ m'' 
-    → ⟨ SEQ s₁ s₂ , m ⟩⇓ₜ m'' 
-  Assignₜ : {m : Memoryₜ} {x : TransVariable} {e : ASTExp} 
-    → ⟨ ASSIGN x e , m ⟩⇓ₜ m [ x  ↦ ⟦ e ⟧ₜ m ]ₜ
-  IfTₜ : {m m' : Memoryₜ} {e : ASTExp} {v : ℕ} {s₁ s₂ : ASTStm}
-    → ⟦ e ⟧ₜ m ≡ v
+  Skipₜ : {mₜ : Memoryₜ} → ⟨ SKIP , mₜ ⟩⇓ₜ mₜ
+  Assignₜ : {mₜ : Memoryₜ} {v : TransVariable} {e : ASTExp} 
+    → ⟨ ASSIGN v e , mₜ ⟩⇓ₜ mₜ [ v  ↦ ⟦ e ⟧ₜ mₜ ]ₜ
+  Seqₜ : {mₜ mₜ' mₜ'' : Memoryₜ} {s₁ s₂ : ASTStm}
+    → ⟨ s₁ , mₜ ⟩⇓ₜ mₜ'  
+    → ⟨ s₂ , mₜ' ⟩⇓ₜ mₜ'' 
+    → ⟨ SEQ s₁ s₂ , mₜ ⟩⇓ₜ mₜ'' 
+  IfTₜ : {mₜ mₜ' : Memoryₜ} {cond : ASTExp} {v : ℕ} {sT sF : ASTStm}
+    → ⟦ cond ⟧ₜ mₜ ≡ v
     → v ≢  0 
-    → ⟨ s₁ , m ⟩⇓ₜ m' 
-    → ⟨ IF e s₁ s₂ , m ⟩⇓ₜ m'  
-  IfFₜ : {m m' : Memoryₜ} {e : ASTExp} {s₁ s₂ : ASTStm}
-    → ⟦ e ⟧ₜ m ≡ 0 
-    → ⟨ s₂ , m ⟩⇓ₜ m' 
-    → ⟨ IF e s₁ s₂ , m ⟩⇓ₜ m'  
-  WhileTₜ : {m m' m'' : Memoryₜ} {e : ASTExp} {v : ℕ} {s : ASTStm}
-    → ⟦ e ⟧ₜ m ≡ v
+    → ⟨ sT , mₜ ⟩⇓ₜ mₜ' 
+    → ⟨ IF cond sT sF , mₜ ⟩⇓ₜ mₜ'  
+  IfFₜ : {mₜ mₜ' : Memoryₜ} {cond : ASTExp} {sT sF : ASTStm}
+    → ⟦ cond ⟧ₜ mₜ ≡ 0 
+    → ⟨ sF , mₜ ⟩⇓ₜ mₜ' 
+    → ⟨ IF cond sT sF , mₜ ⟩⇓ₜ mₜ'  
+  WhileTₜ : {mₜ mₜ' mₜ'' : Memoryₜ} {cond : ASTExp} {v : ℕ} {s : ASTStm}
+    → ⟦ cond ⟧ₜ mₜ ≡ v
     → v ≢  0  
-    → ⟨ s , m ⟩⇓ₜ m'  
-    → ⟨ WHILE e s , m' ⟩⇓ₜ m'' 
-    → ⟨ WHILE e s , m ⟩⇓ₜ m''
-  WhileFₜ : {m : Memoryₜ} {e : ASTExp} {s : ASTStm}
-    → ⟦ e ⟧ₜ m ≡ 0 
-    → ⟨ WHILE e s , m ⟩⇓ₜ m
+    → ⟨ s , mₜ ⟩⇓ₜ mₜ'  
+    → ⟨ WHILE cond s , mₜ' ⟩⇓ₜ mₜ'' 
+    → ⟨ WHILE cond s , mₜ ⟩⇓ₜ mₜ''
+  WhileFₜ : {mₜ : Memoryₜ} {cond : ASTExp} {s : ASTStm}
+    → ⟦ cond ⟧ₜ mₜ ≡ 0 
+    → ⟨ WHILE cond s , mₜ ⟩⇓ₜ mₜ
