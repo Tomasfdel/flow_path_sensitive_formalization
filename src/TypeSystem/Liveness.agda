@@ -43,7 +43,7 @@ livenessAnalysisAux statement@(ASSIGN variableName assignId expression) Γ _ nex
     let liveIn = (nextLiveIn diffᵥₛ (statementKill statement)) unionᵥₛ (expressionGen expression Γ)
         newAssignLiveOuts = assignLiveOuts [ assignId ]≔ nextLiveIn
      in liveIn , newAssignLiveOuts
-livenessAnalysisAux (IF0 condition statementT statementF) Γ activeSet nextLiveIn assignLiveOuts = 
+livenessAnalysisAux (IF condition statementT statementF) Γ activeSet nextLiveIn assignLiveOuts = 
     let liveInT , assignLiveOutsT = livenessAnalysisAux statementT Γ activeSet nextLiveIn assignLiveOuts
         liveInF , assignLiveOutsF = livenessAnalysisAux statementF Γ activeSet nextLiveIn assignLiveOutsT
      in (liveInT unionᵥₛ liveInF) unionᵥₛ (expressionGen condition Γ) , assignLiveOutsF

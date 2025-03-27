@@ -24,11 +24,11 @@ data ⟨_,_⟩⇓_ : ASTStmS → Memory → Memory → Set where
     → ⟦ e ⟧ₑ m ≡ v
     → v ≢  0 
     → ⟨ s₁ , m ⟩⇓ m' 
-    → ⟨ If0 e s₁ s₂ , m ⟩⇓ m'  
+    → ⟨ If e s₁ s₂ , m ⟩⇓ m'  
   IfF : {m m' : Memory} {e : ASTExpS} {s₁ s₂ : ASTStmS}
     → ⟦ e ⟧ₑ m ≡ 0 
     → ⟨ s₂ , m ⟩⇓ m' 
-    → ⟨ If0 e s₁ s₂ , m ⟩⇓ m'  
+    → ⟨ If e s₁ s₂ , m ⟩⇓ m'  
   WhileT : {m m' m'' : Memory} {e : ASTExpS} {v : ℕ} {s : ASTStmS}
     → ⟦ e ⟧ₑ m ≡ v
     → v ≢  0 
@@ -53,11 +53,11 @@ data ⟨_,_⟩⇓ₜ_ : ASTStm → Memoryₜ → Memoryₜ → Set where
     → ⟦ e ⟧ₜ m ≡ v
     → v ≢  0 
     → ⟨ s₁ , m ⟩⇓ₜ m' 
-    → ⟨ IF0 e s₁ s₂ , m ⟩⇓ₜ m'  
+    → ⟨ IF e s₁ s₂ , m ⟩⇓ₜ m'  
   IfFₜ : {m m' : Memoryₜ} {e : ASTExp} {s₁ s₂ : ASTStm}
     → ⟦ e ⟧ₜ m ≡ 0 
     → ⟨ s₂ , m ⟩⇓ₜ m' 
-    → ⟨ IF0 e s₁ s₂ , m ⟩⇓ₜ m'  
+    → ⟨ IF e s₁ s₂ , m ⟩⇓ₜ m'  
   WhileTₜ : {m m' m'' : Memoryₜ} {e : ASTExp} {v : ℕ} {s : ASTStm}
     → ⟦ e ⟧ₜ m ≡ v
     → v ≢  0  

@@ -12,12 +12,12 @@ open import Transformation.AST {n}
 -- Counts the number of assignments in a program statement.
 assignCount : ASTStm → ℕ
 assignCount (ASSIGN _ _) = 1
-assignCount (IF0 _ sT sF) = assignCount sT + assignCount sF
+assignCount (IF _ sT sF) = assignCount sT + assignCount sF
 assignCount (WHILE _ s) = assignCount s
 assignCount (SEQ s1 s2) = assignCount s1 + assignCount s2
 assignCount SKIP = 0
 
--- Function used to cover the IF0 and SEQ cases of identifyAssignmentsAux, which are analogous since
+-- Function used to cover the IF and SEQ cases of identifyAssignmentsAux, which are analogous since
 -- both involve identifying all assignments in one statement and then in the other.
 identifyStatementSequence : {t : ℕ} {s : ASTStm} → (s1 : ASTStm) → (s2 : ASTStm) → (id : ℕ) → 
                             assignCount s ≡ assignCount s1 + assignCount s2 → id + assignCount s ≤ t → 
@@ -32,9 +32,9 @@ identifyAssignmentsAux {t} s@(ASSIGN x exp) id id+1≤t =
    let 1+id≤t : assignCount s + id ≤ t
        1+id≤t = subst (λ x → x ≤ t) (+-comm id (assignCount s)) id+1≤t
    in ASSIGN x (fromℕ< {id} 1+id≤t) exp
-identifyAssignmentsAux {t} s@(IF0 cond sT sF) id id+aCIf≤t =
+identifyAssignmentsAux {t} s@(IF cond sT sF) id id+aCIf≤t =
    let sTId , sFId = identifyStatementSequence {t} {s} sT sF id refl id+aCIf≤t
-   in IF0 cond sTId sFId 
+   in IF cond sTId sFId 
 identifyAssignmentsAux (WHILE cond s) id id+aCS≤t =
    WHILE cond (identifyAssignmentsAux s id id+aCS≤t)
 identifyAssignmentsAux {t} s@(SEQ s1 s2) id id+aCSeq≤t =

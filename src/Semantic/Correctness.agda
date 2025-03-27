@@ -134,7 +134,7 @@ correctness s@{⟦ x := e ⟧} {m} {.(m [ x ↦ ⟦ e ⟧ₑ m ])} {mₜ} {mₜ'
                                   (cong (λ y → lookupOrDefault y (lookup mₜ' varName)) (sym (lookupy∘changex x varName a vN!=x)))  
                                 )
 
-correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
+correctness {If cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfT {.m} {.m'} {.cond} {v} {.sT} {.sF} em=v v<>0 d) 
   (IfTₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {v'} {sT'} {sF'} em'=v' v'<>0 (Seqₜ {m1} {m2} {m3} d' d''))
   (IfWF wFmₜa' wFsTmₜa _)
@@ -146,7 +146,7 @@ correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
         mt1a'=mt2a'' = :=𝒜-memEq {aT} {a'} d'' (wellFormed-trans {_} {_} {_} {a'} wFmₜa' d')
       in ==ₘ-trans {m'} {m2} {mₜ'} {aT} {a'} m1=mt1a' mt1a'=mt2a''
 
-correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
+correctness {If cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfT {.m} {.m'} {.cond} {v} {_} {_} em=v v<>0 d) 
   (IfFₜ em'=0 d') 
   _
@@ -154,7 +154,7 @@ correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
     let em=em' = expEquality {cond} {m} {mₜ} {v} {0} {a} meq em=v em'=0
      in ⊥-elim (v<>0 em=em')
 
-correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
+correctness {If cond sT sF} {m} {m'} {mₜ} {mₜ'} {a} 
   (IfF em=0 d) 
   (IfTₜ {.mₜ} {.mₜ'} {_} {v} {_} {_} em'=v v<>0 d') 
   _
@@ -162,7 +162,7 @@ correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
     let em=em' = expEquality {cond} {m} {mₜ} {0} {v} {a} meq em=0 em'=v
      in ⊥-elim (v<>0 (sym em=em'))
 
-correctness {If0 cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
+correctness {If cond sT sF} {m} {m'} {mₜ} {mₜ'} {a}
   (IfF {.m} {.m'} {.cond} {.sT} {.sF} em=0 d) 
   (IfFₜ {.mₜ} {.mₜ'} {.(transExp cond a)} {sT'} {sF'} em'=0 (Seqₜ {m1} {m2} {m3} d' d''))
   (IfWF wFmₜa' _ wFsTmₜa)

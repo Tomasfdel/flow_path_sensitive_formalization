@@ -57,7 +57,7 @@ populatePredicateVector (ASSIGN variableName assignId _) predicate predicateVect
     let newPredicate = removePredicatesWithVariable predicate variableName
         newPredicateVector = predicateVector [ assignId ]≔ predicate
      in newPredicate , newPredicateVector
-populatePredicateVector (IF0 condition statementT statementF) predicate predicateVector = 
+populatePredicateVector (IF condition statementT statementF) predicate predicateVector = 
     let predicateT , predicateVectorT = populatePredicateVector statementT (simplifyAnd predicate (ExpNonZero condition)) predicateVector
         predicateF , predicateVectorF = populatePredicateVector statementF (simplifyAnd predicate (ExpZero condition)) predicateVectorT
      in intersectPredicates predicateT predicateF , predicateVectorF

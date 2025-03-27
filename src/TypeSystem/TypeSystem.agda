@@ -64,7 +64,7 @@ data _,_⊦_[_,_]-_ : {t : ℕ} → TypingEnvironment → SecurityLabel → ASTS
     → Γ ⊦ cond - τ
     → Γ , (Join τ pc) ⊦ sT [ P , L ]- proofs
     → Γ , (Join τ pc) ⊦ sF [ P , L ]- proofs'
-    → Γ , pc ⊦ IF0 cond sT sF [ P , L ]- (proofs ++ proofs')
+    → Γ , pc ⊦ IF cond sT sF [ P , L ]- (proofs ++ proofs')
   ASSIGN : {t : ℕ} {Γ : TypingEnvironment} {pc : SecurityLabel} {τ : SecurityLabel} {v : TransVariable} {id : Fin t} {e : ASTExp} {P : Vec Predicate t} {L : Vec VariableSet t}
     → Γ ⊦ e - τ
     → variableNotInFreeSets v Γ (lookup L id) 
@@ -94,7 +94,7 @@ typeStatementAux Γ pc (ASSIGN varName assId exp) P L
                  in just ([ proofObligation ] , ASSIGN expType varNotInFreeSets)
 ...         | no _ = nothing
 
-typeStatementAux Γ pc (IF0 cond sT sF) P L = 
+typeStatementAux Γ pc (IF cond sT sF) P L = 
   let τ , expType = typeExpression Γ cond
    in case typeStatementAux Γ (Join τ pc) sT P L of λ where
         nothing → nothing

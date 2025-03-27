@@ -25,14 +25,14 @@ transStm (Seq s1 s2) active =
    let (tS1 , active1) = transStm s1 active
        (tS2 , active2) = transStm s2 active1
    in (SEQ tS1 tS2 , active2)
-transStm (If0 cond sT sF) active =
+transStm (If cond sT sF) active =
    let tCond = transExp cond active
        (tST , active1) = transStm sT active
        (tSF , active2) = transStm sF active
        active3 = merge𝒜 active1 active2
        trueBranch = SEQ tST (active3 :=𝒜 active1)
        falseBranch = SEQ tSF (active3 :=𝒜 active2)
-   in (IF0 tCond trueBranch falseBranch , active3)
+   in (IF tCond trueBranch falseBranch , active3)
 transStm (While cond s) active =
    let (_ , active1) = transStm s active
        active2 = merge𝒜 active active1

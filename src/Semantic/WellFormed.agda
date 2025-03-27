@@ -36,10 +36,10 @@ data wellFormedStm : ASTStmS → Memoryₜ → 𝒜 → Set where
     → wellFormed m (proj₂ (transStm ⟦ v := e ⟧ a))
     → wellFormedStm ⟦ v := e ⟧ m a
   IfWF : {e : ASTExpS} {s s' : ASTStmS} {m : Memoryₜ} {a : 𝒜}
-    → wellFormed m (proj₂ (transStm (If0 e s s') a))
+    → wellFormed m (proj₂ (transStm (If e s s') a))
     → wellFormedStm s m a
     → wellFormedStm s' m a
-    → wellFormedStm (If0 e s s') m a
+    → wellFormedStm (If e s s') m a
   WhileWF : {e : ASTExpS} {s : ASTStmS} {m : Memoryₜ} {a : 𝒜}
     → wellFormed m (merge𝒜 a (proj₂ (transStm s a)))
     → wellFormedStm s m (merge𝒜 a (proj₂ (transStm s a)))
@@ -89,7 +89,7 @@ wellFormedStmTransitive (SeqWF wFsmₜa wFs'mₜa) d =
   SeqWF (wellFormedStmTransitive wFsmₜa d) 
         (wellFormedStmTransitive wFs'mₜa d) 
 wellFormedStmTransitive (IfWF {e} {s} {s'} {_} {a} wFmₜa' wFsmₜa wFs'mₜa) d = 
-  IfWF (wellFormed-trans {_} {_} {_} {proj₂ (transStm (If0 e s s') a)} wFmₜa' d) 
+  IfWF (wellFormed-trans {_} {_} {_} {proj₂ (transStm (If e s s') a)} wFmₜa' d) 
        (wellFormedStmTransitive wFsmₜa d) 
        (wellFormedStmTransitive wFs'mₜa d) 
 wellFormedStmTransitive (WhileWF {e} {s} {_} {a} wFmₜa' wFsmₜa') d = 
