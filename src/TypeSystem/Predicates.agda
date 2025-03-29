@@ -2,6 +2,7 @@ module TypeSystem.Predicates {n} where
 
 open import Data.Bool.Base
 open import Data.List.Base
+  hiding (replicate)
 open import Data.Nat
 open import Data.Product
 open import Data.Vec.Base 
@@ -18,62 +19,55 @@ data Predicate : Set where
 simplifyAnd : Predicate → Predicate → Predicate
 simplifyAnd True pred = pred
 simplifyAnd pred True = pred
-simplifyAnd pred1 pred2 = And pred1 pred2
+simplifyAnd pred₁ pred₂ = And pred₁ pred₂
 
-removePredicatesWithVariable : Predicate → TransVariable → Predicate
-removePredicatesWithVariable True _ = True
-removePredicatesWithVariable predicate@(ExpZero expression) variableName = 
-    if variableName elemᵥₛ (expressionVariables expression) then True else predicate
-removePredicatesWithVariable predicate@(ExpNonZero expression) variableName = 
-    if variableName elemᵥₛ (expressionVariables expression) then True else predicate
-removePredicatesWithVariable (And predicate1 predicate2) variableName = 
-    simplifyAnd (removePredicatesWithVariable predicate1 variableName) (removePredicatesWithVariable predicate2 variableName)
+-- Removes all parts of a predicate that contain a given variable.
+removeVarFromPred : Predicate → TransVariable → Predicate
+removeVarFromPred True _ = True
+removeVarFromPred pred@(ExpZero exp) v = if v elemᵥₛ (expressionVariables exp) then True else pred
+removeVarFromPred pred@(ExpNonZero exp) v = if v elemᵥₛ (expressionVariables exp) then True else pred
+removeVarFromPred (And pred₁ pred₂) v = simplifyAnd (removeVarFromPred pred₁ v) (removeVarFromPred pred₂ v)
 
+-- Equality test for predicates.
 _==ₚ_ : Predicate → Predicate → Bool
 True ==ₚ True = true
-(ExpZero exp1) ==ₚ (ExpZero exp2) = exp1 ==ₑ exp2
-(ExpNonZero exp1) ==ₚ (ExpNonZero exp2) = exp1 ==ₑ exp2
-(And pred1 pred2) ==ₚ (And pred3 pred4) = (pred1 ==ₚ pred3) ∧ (pred2 ==ₚ pred4)
+ExpZero exp₁ ==ₚ ExpZero exp₂ = exp₁ ==ₑ exp₂
+ExpNonZero exp₁ ==ₚ ExpNonZero exp₂ = exp₁ ==ₑ exp₂
+And pred₁ pred₂ ==ₚ And pred₃ pred₄ = (pred₁ ==ₚ pred₃) ∧ (pred₂ ==ₚ pred₄)
 _ ==ₚ _ = false
 
-containsPredicate : Predicate → Predicate → Bool
-containsPredicate pred (And pred1 pred2) = 
-    (containsPredicate pred pred1) ∨ (containsPredicate pred pred2)
-containsPredicate pred1 pred2 = pred1 ==ₚ pred2
+-- Checks if a base predicate is part of another predicate.
+containsPred : Predicate → Predicate → Bool
+containsPred pred (And pred₁ pred₂) = (containsPred pred pred₁) ∨ (containsPred pred pred₂)
+containsPred pred₁ pred₂ = pred₁ ==ₚ pred₂
 
-intersectPredicates : Predicate → Predicate → Predicate
-intersectPredicates (And pred1 pred2) pred = 
-    simplifyAnd (intersectPredicates pred1 pred) (intersectPredicates pred2 pred)
-intersectPredicates pred1 pred2 = 
-    if containsPredicate pred1 pred2 then pred1 else True
+-- Finds all base predicates that are part of both the given predicates and return a conjunction of them.
+intersectPred : Predicate → Predicate → Predicate
+intersectPred (And pred₁ pred₂) pred = simplifyAnd (intersectPred pred₁ pred) (intersectPred pred₂ pred)
+intersectPred pred₁ pred₂ = if containsPred pred₁ pred₂ then pred₁ else True
 
 -- Iterates through the given program statement and determines a predicate that should always be true after its execution.
 -- For that, it takes a predicate previous to the execution of the statement and uses that to determine predicates of the
 -- intermediate steps of the execution doing a shallow branch analysis on IF and WHILE statements.
 -- Additionally, when the function finds an assignment statement, it stores the predicate that was true before its execution
 -- in the n-th index of a vector, where n is the index number of the assignment. 
-populatePredicateVector : {t : ℕ} → ASTStmId t → Predicate → Vec Predicate t → Predicate × (Vec Predicate t)
-populatePredicateVector (ASSIGN variableName assignId _) predicate predicateVector = 
-    let newPredicate = removePredicatesWithVariable predicate variableName
-        newPredicateVector = predicateVector [ assignId ]≔ predicate
-     in newPredicate , newPredicateVector
-populatePredicateVector (IF condition statementT statementF) predicate predicateVector = 
-    let predicateT , predicateVectorT = populatePredicateVector statementT (simplifyAnd predicate (ExpNonZero condition)) predicateVector
-        predicateF , predicateVectorF = populatePredicateVector statementF (simplifyAnd predicate (ExpZero condition)) predicateVectorT
-     in intersectPredicates predicateT predicateF , predicateVectorF
-populatePredicateVector (WHILE condition statement) predicate predicateVector = 
-    let predicate2 , predicateVector2 = populatePredicateVector statement (simplifyAnd predicate (ExpNonZero condition)) predicateVector
-        finalPredicate = intersectPredicates predicate predicate2
-     in (simplifyAnd finalPredicate (ExpZero condition)) , predicateVector2
-populatePredicateVector (SEQ statement1 statement2) predicate predicateVector = 
-    let predicate2 , predicateVector2 = populatePredicateVector statement1 predicate predicateVector
-     in populatePredicateVector statement2 predicate2 predicateVector2
-populatePredicateVector SKIP predicate predicateVector =
-    predicate , predicateVector
+populatePredicates : {t : ℕ} → ASTStmId t → Predicate → Vec Predicate t → Predicate × (Vec Predicate t)
+populatePredicates SKIP pred predicates = pred , predicates
+populatePredicates (ASSIGN v id _) pred predicates = removeVarFromPred pred v , predicates [ id ]≔ pred
+populatePredicates (SEQ s₁ s₂) pred predicates = 
+  let pred' , predicates' = populatePredicates s₁ pred predicates
+   in populatePredicates s₂ pred' predicates'
+populatePredicates (IF cond sT sF) pred predicates = 
+  let predT , predicatesT = populatePredicates sT (simplifyAnd pred (ExpNonZero cond)) predicates
+      predF , predicatesF = populatePredicates sF (simplifyAnd pred (ExpZero cond)) predicatesT
+   in intersectPred predT predF , predicatesF
+populatePredicates (WHILE cond s) pred predicates = 
+  let pred' , predicates' = populatePredicates s (simplifyAnd pred (ExpNonZero cond)) predicates
+      finalPred = intersectPred pred pred'
+   in simplifyAnd finalPred (ExpZero cond) , predicates'
 
 -- Given a program statement, returns a vector of predicates so that the element in its n-th
 -- position is a predicate that is always true before the execution of the n-th assignment 
 -- of the program. 
 generatePredicates : {t : ℕ} → ASTStmId t → Vec Predicate t
-generatePredicates {t} statement =
-    proj₂ (populatePredicateVector statement True (Data.Vec.Base.replicate t True))
+generatePredicates {t} statement = proj₂ (populatePredicates statement True (replicate t True))
