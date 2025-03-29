@@ -9,7 +9,6 @@ open import Data.Vec.Base
 open import Transformation.AST {n}
 open import Transformation.VariableSet {n}
 
--- TODO(minor): Maybe implement this as a lattice later.
 data SecurityLevel : Set where
     Low : SecurityLevel
     High : SecurityLevel
@@ -20,20 +19,22 @@ data SecurityLabel : Set where
     Meet : SecurityLabel → SecurityLabel → SecurityLabel
     Join : SecurityLabel → SecurityLabel → SecurityLabel
 
+-- Returns all the free variables of a SecurityLabel.
 labelVariables : SecurityLabel → VariableSet
 labelVariables (Label _) = emptyᵥₛ
-labelVariables (ExpTest exp l1 l2) = 
-    ((expressionVariables exp) unionᵥₛ (labelVariables l1)) unionᵥₛ (labelVariables l2)
-labelVariables (Meet l1 l2) = (labelVariables l1) unionᵥₛ (labelVariables l2)
-labelVariables (Join l1 l2) = (labelVariables l1) unionᵥₛ (labelVariables l2)
+labelVariables (ExpTest exp l₁ l₂) = 
+    ((expressionVariables exp) unionᵥₛ (labelVariables l₁)) unionᵥₛ (labelVariables l₂)
+labelVariables (Meet l₁ l₂) = (labelVariables l₁) unionᵥₛ (labelVariables l₂)
+labelVariables (Join l₁ l₂) = (labelVariables l₁) unionᵥₛ (labelVariables l₂)
 
+-- A TypingEnvironment is a mapping from TransVariables to SecurityLabels.
 TypingEnvironment : Set _
 TypingEnvironment = Vec (List SecurityLabel) n 
 
-lookupType : List SecurityLabel → ℕ → SecurityLabel
-lookupType [] _ = Label Low
-lookupType (x ∷ xs) zero = x
-lookupType (x ∷ xs) (suc n) = lookupType xs n
+lookupLabel : List SecurityLabel → ℕ → SecurityLabel
+lookupLabel [] _ = Label Low
+lookupLabel (x ∷ xs) zero = x
+lookupLabel (x ∷ xs) (suc n) = lookupLabel xs n
 
 findType : TypingEnvironment → TransVariable → SecurityLabel
-findType Γ (v , index) = lookupType (lookup Γ v) index
+findType Γ (v , index) = lookupLabel (lookup Γ v) index
