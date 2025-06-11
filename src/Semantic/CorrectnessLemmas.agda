@@ -120,9 +120,9 @@ expEquality {Add exp₁ exp₂} m=mₜ refl refl =
   → mₜ - A ==ₘₜ mₜ' - A'
 :=𝒜-memEq d wFmₜA' varName with n ≟ₙ zero 
 ...                           | no n<>0 = let n' , n'+1=n = 0<n=>n'+1=n (n≢0⇒n>0 n<>0)
-                                              n-1=n : pred n ≡ pred (suc n')
-                                              n-1=n = (cong pred (sym n'+1=n))
+                                              n-1=n' : pred n ≡ pred (suc n')
+                                              n-1=n' = (cong pred (sym n'+1=n))
                                               vN≤n-1 : toℕ varName ≤ₙ pred n
                                               vN≤n-1 = (toℕ≤pred[n] varName)
-                                           in 𝒜memEqPreVar d (subst (λ x → toℕ varName ≤ₙ x) n-1=n vN≤n-1) wFmₜA'
+                                           in 𝒜memEqPreVar d (subst (λ x → toℕ varName ≤ₙ x) n-1=n' vN≤n-1) wFmₜA'
 :=𝒜-memEq {[]} {[]} Skipₜ _ _ | yes _ = refl
