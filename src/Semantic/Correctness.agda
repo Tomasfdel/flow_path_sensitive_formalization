@@ -136,34 +136,34 @@ mutual
       let A₁ = merge𝒜 A (proj₂ (transStm s A))
           mₜA=mₜ₁A₁ : mₜ - A ==ₘₜ mₜ₁ - A₁
           mₜA=mₜ₁A₁ = :=𝒜-memEq {A} {A₁} {mₜ} {mₜ₁} dₜ₁ wFmₜA₁
-       in whileCorrectness d dₜ₂ refl refl refl refl (wellFormedStm-trans wF dₜ₁) (==ₘ-trans {m} {mₜ} {mₜ₁} {A} {A₁} meq mₜA=mₜ₁A₁)
+       in whileCorrectness refl refl refl refl d dₜ₂ (wellFormedStm-trans wF dₜ₁) (==ₘ-trans {m} {mₜ} {mₜ₁} {A} {A₁} meq mₜA=mₜ₁A₁)
 
   -- Correctness of the program transformation for the While case.
   whileCorrectness : {e : ASTExpS} {s : ASTStmS} {e' : ASTExp} {s' : ASTStm} {m m' : Memory} {mₜ mₜ' : Memoryₜ} {A A₁ A₂ : 𝒜}
-    → ⟨ While e s , m ⟩⇓ m'
-    → ⟨ WHILE e' s' , mₜ ⟩⇓ₜ mₜ' 
     → e' ≡ transExp e A₁
     → s' ≡ SEQ (proj₁ (transStm s A₁)) (A₁ :=𝒜 A₂)
     → A₁ ≡ merge𝒜 A (proj₂ (transStm s A))
     → A₂ ≡ proj₂ (transStm s A₁)
+    → ⟨ While e s , m ⟩⇓ m'
+    → ⟨ WHILE e' s' , mₜ ⟩⇓ₜ mₜ' 
     → wellFormedStm (While e s) mₜ A
     → m ==ₘ mₜ - A₁
     → m' ==ₘ mₜ' - A₁
-  whileCorrectness (WhileF _) (WhileFₜ _) _ _ _ _ _ meq = meq
-  whileCorrectness {e = e} {m = m} (WhileF em=0) (WhileTₜ {v = v} em'=v v<>0 _ _) refl refl refl refl _ meq = 
+  whileCorrectness _ _ _ _ (WhileF _) (WhileFₜ _) _ meq = meq
+  whileCorrectness {e = e} {m = m} refl refl refl refl (WhileF em=0) (WhileTₜ {v = v} em'=v v<>0 _ _) _ meq = 
     let em=em' = expEquality {e} {m} {_} {0} {v} {_} meq em=0 em'=v
      in ⊥-elim (v<>0 (sym em=em'))
-  whileCorrectness {e = e} {m = m} (WhileT {v = v} em=v v<>0 _ _) (WhileFₜ em'=0) refl refl refl refl _ meq = 
+  whileCorrectness {e = e} {m = m} refl refl refl refl (WhileT {v = v} em=v v<>0 _ _) (WhileFₜ em'=0) _ meq = 
     let em=em' = expEquality {e} {m} {_} {v} {0} {_} meq em=v em'=0
      in ⊥-elim (v<>0 em=em')
   whileCorrectness {A₁ = A₁} {A₂ = A₂} 
+    refl refl refl refl
     (WhileT {m} {m₁} {m'} _ _ d₁ d₂) 
     (WhileTₜ {mₜ} {mₜ₂} {mₜ'} _ _ dₜ@(Seqₜ {.mₜ} {mₜ₁} {.mₜ₂} dₜ₁ dₜ₂) dₜ₃)
-    refl refl refl refl
     wF@(WhileWF wFmₜA₁ wFsmₜA₁)
     meq = 
       let m₁=mₜ₁A₂ : m₁ ==ₘ mₜ₁ - A₂
           m₁=mₜ₁A₂ = correctness d₁ dₜ₁ wFsmₜA₁ meq
           mₜ₁A₂=mₜ₂A₁ : mₜ₁ - A₂ ==ₘₜ mₜ₂ - A₁
           mₜ₁A₂=mₜ₂A₁ = :=𝒜-memEq dₜ₂ (wellFormed-trans {A = A₁} wFmₜA₁ dₜ₁)
-       in whileCorrectness d₂ dₜ₃ refl refl refl refl (wellFormedStm-trans wF dₜ) (==ₘ-trans {m₁} {mₜ₁} {mₜ₂} {A₂} {A₁} m₁=mₜ₁A₂ mₜ₁A₂=mₜ₂A₁)
+       in whileCorrectness refl refl refl refl d₂ dₜ₃ (wellFormedStm-trans wF dₜ) (==ₘ-trans {m₁} {mₜ₁} {mₜ₂} {A₂} {A₁} m₁=mₜ₁A₂ mₜ₁A₂=mₜ₂A₁)
