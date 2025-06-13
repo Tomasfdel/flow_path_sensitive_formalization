@@ -95,8 +95,8 @@ mutual
                                 ∎
   correctness {Seq s₁ s₂} (Seq d₁ d₂) (Seqₜ dₜ₁ dₜ₂) (SeqWF wFs₁mₜA wFs₂mₜA') meq = 
     let correct₁ = correctness d₁ dₜ₁ wFs₁mₜA meq
-        wFs₂A' = wellFormedStm-trans wFs₂mₜA' dₜ₁
-     in correctness d₂ dₜ₂ wFs₂A' correct₁
+        wFs₂mₜ₁A' = wellFormedStm-trans wFs₂mₜA' dₜ₁
+     in correctness d₂ dₜ₂ wFs₂mₜ₁A' correct₁
   correctness {If cond sT sF} {m} {m'} {mₜ} {mₜ'} {A} 
     (IfT _ _ d) 
     (IfTₜ _ _ (Seqₜ {.mₜ} {mₜ₁} {.mₜ'} dₜ₁ dₜ₂))
