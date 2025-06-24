@@ -10,6 +10,11 @@ This formalization has been tested using
 The Agda modules are organized according to the following structure:
 
 * src
+    * Examples
+        * Example1
+        * Example2
+        * Example3
+        * Example4
     * Semantic
         * Correctness
         * CorrectnessLemmas
@@ -63,3 +68,7 @@ The Agda modules are organized according to the following structure:
 * **Predicates.agda**: Generation of program state predicates that are true for each assignment statement, also used in the typing rules. _(Section 5.4)_
 
 * **TypeSystem.agda**: Definition of the type system for transformed programs. _(Section 5.5)_
+
+**Examples**
+
+Set of example programs used to test some aspects of the type system.
