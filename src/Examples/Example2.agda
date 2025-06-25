@@ -1,24 +1,16 @@
 module Examples.Example2 where
 
-open import Agda.Builtin.List
 open import Data.Fin.Base
 open import Data.Maybe.Base
 open import Data.Nat
-open import Data.Product 
 open import Data.Vec
 
 n : ℕ
 n = 3
 
-open import TypeSystem.AssignmentId {n}
-open import Transformation.ActiveSet {n}
 open import Transformation.AST {n}
-open import TypeSystem.Liveness {n}
-open import TypeSystem.Predicates {n}
 open import TypeSystem.SecurityLabels {n}
-open import Transformation.Transformation {n}
 open import TypeSystem.TypeSystem {n}
-open import Transformation.VariableSet {n}
 
 x : Fin n
 x = (fromℕ 0) ↑ˡ 2
