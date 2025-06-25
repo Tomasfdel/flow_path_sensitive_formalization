@@ -34,13 +34,13 @@ l2 = fromℕ 4
 example3 : ASTStmS
 example3 = Seq (x := IntVal 0)
           (Seq (y := IntVal 0)
-          (Seq (If (Var l1) (y := Var h) Skip)
-          (Seq (If (Var l1) Skip (x := Var y))
+          (Seq (If (Var l1) Skip (y := Var h))
+          (Seq (If (Var l1) (x := Var y) Skip)
                (l2 := Var x))))
 
 typeEnv : TypingEnvironment
 typeEnv = (toList [ Label Low ]) ∷  
-          (toList [ ExpTest (VAR (l1 , zero)) (Label High) (Label Low) ]) ∷ 
+          (toList [ ExpTest (VAR (l1 , zero)) (Label Low) (Label High) ]) ∷ 
           (toList [ Label High ]) ∷ 
           (toList [ Label Low ]) ∷ 
           (toList [ Label Low ]) ∷
