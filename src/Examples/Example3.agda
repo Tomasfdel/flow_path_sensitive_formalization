@@ -3,6 +3,7 @@ module Examples.Example3 where
 open import Data.Fin.Base
 open import Data.Maybe.Base
 open import Data.Nat
+open import Data.Product
 open import Data.Vec
 
 n : ℕ
